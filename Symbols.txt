@@ -1,0 +1,9 @@
+# Japanese symbol=PLC tag
+# Mappings confirmed by examples in lad.mnm
+# Multiple Japanese aliases may map to the same PLC tag.
+ST1ストッパ_BACKWARD_LS=CYL1_BACKWARD_LS
+ST1エスケープストッパ_BACKWARD_LS=CYL2_BACKWARD_LS
+ST1ストッパ_BACKWARD=CYL1_BACKWARD
+ST1エスケープストッパ_BACKWARD=CYL1_FORWARD
+ST8加熱タイマー=T8
+ST8加熱タイマーON(1000ms)=T8

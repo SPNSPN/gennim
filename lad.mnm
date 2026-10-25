@@ -1,0 +1,133 @@
+;*** Input1 ***
+;# ST1: 搬入
+;## C0: 原位置復帰
+;### Start: ManualMode && HomePB
+;- Step1_End: ストッパ_BACKWARD_LS && エスケープストッパ_BACKWARD_LS
+;### End: 
+;- Step1 -> ストッパ_BACKWARD
+;- Step1 -> エスケープストッパ_BACKWARD
+
+;*** Output1 ***
+; ST1: 搬入; C0: 原位置復帰
+LD ManualMode
+AND HomePB
+LD ST1_C0_Start
+ORB
+AND Ready
+ANI ST1_C0_End
+OUT ST1_C0_Start
+
+LD ST1_C0_Start
+AND AlwaysOn
+LD ST1_C0_Step1_Start
+ORB
+AND ST1_C0_Start
+OUT ST1_C0_Step1_Start
+
+LD ST1_C0_Step1_Start
+AND CYL1_BACKWARD_LS ; ストッパ_BACKWARD_LS
+AND CYL2_BACKWARD_LS ; エスケープストッパ_BACKWARD_LS
+LD ST1_C0_Step1_End
+ORB
+AND ST1_C0_Start
+OUT ST1_C0_Step1_End
+
+LD ST1_C0_Step1_End
+AND AlwaysOn
+LD ST1_C0_End
+ORB
+AND ST1_C0_Start
+OUT ST1_C0_End
+
+LD ST1_C0_Step1_Start
+OUT CYL1_BACKWARD ; ストッパ_BACKWARD
+
+LD ST1_C0_Step1_Start
+OUT CYL1_FORWARD ; エスケープストッパ_BACKWARD
+
+
+
+
+
+
+
+;*** Input2 ***
+- 記憶"ME5_HasOkWork"
+- CIN2_2_LOAD_COMPLETE && ME3_HasOkWork -SET-> ME5_HasOkWork
+- fall(COUT2_LOAD_COMPLETE) -RESET-> ME5_HasOkWork
+
+;*** Output2 ***
+LD CIN2_2_LOAD_COMPLETE
+AND ME3_HasOkWork
+LD ME5_HasOkWork
+ORB
+ANFI COUT2_LOAD_COMPLETE
+OUT ME5_HasOkWork ; 記憶"ME5_HasOkWork"
+
+
+;*** Input3 ***
+# ST8: 加熱1
+## C1: 投入RBから搬入・加熱
+- Step6_Start && not(Step7_End) -TIMER-> 加熱タイマー
+
+;*** Output3 ***
+LD ST8_C1_Step6_Start 
+ANI ST8_C1_Step7_End
+TON T8 ; 加熱タイマー
+
+
+
+;*** Input4 ***
+# ST2: 結果書込
+## C2: 返却RBからコア搬入・ID書込
+- Step4_Start && not(Step4_End) && ME5_HasOkWork -> MOV "01" ID2_WRITEDATA
+
+;*** Output4 ***
+LD ST2_C2_Step4_Start 
+ANI ST2_C2_Step4_End
+AND ME5_HasOkWork
+MOV K01 ID2_WRITEDATA
+
+
+;*** Input5 ***
+# ST4: 良品搬送
+## C0: 原位置復帰
+- Step1_Start && not(Step1_End) -> ストッパ_BACKWARD
+- Step1_Start && not(Step1_End) -> エスケープストッパ_BACKWARD
+
+## C1: ST3から搬入
+- Step1_Start && not(Step1_End) -> ストッパ_BACKWARD
+- Step1_Start && not(Step1_End) -> エスケープストッパ_FORWARD
+- Step3_Start && not(Step3_End) -> エスケープストッパ_BACKWARD
+
+## C2: 後工程へ搬出
+### Start: AutoRun && パレット在籍 && not(ST4_C1_Start)
+- Step2_Start && not(Step2_End) -> ストッパ_FORWARD
+- Step4_Start && not(Step5_End) -> ストッパ_BACKWARD
+
+
+;*** Output5 ***
+LD ST4_C0_Step1_Start
+ANI ST4_C0_Step1_End
+LD ST4_C1_Step1_Start
+ANI ST4_C1_Step1_End
+LD ST4_C2_Step4_Start
+ANI ST4_C2_Step5_End
+ORB
+ORB
+OUT CYL5_BACKWARD ; ストッパ_BACKWARD
+
+LD ST4_C2_Step2_Start
+ANI ST4_C2_Step2_End
+OUT CYL5_FORWARD ; ストッパ_FORWARD
+
+LD ST4_C0_Step1_Start
+ANI ST4_C0_Step1_End
+LD ST4_C1_Step3_Start
+ANI ST4_C1_Step3_End
+ORB
+OUT CYL6_BACKWARD ; エスケープストッパ_BACKWARD
+
+LD ST4_C1_Step1_Start
+ANI ST4_C1_Step1_End
+OUT CYL6_FORWARD ; エスケープストッパ_FORWARD

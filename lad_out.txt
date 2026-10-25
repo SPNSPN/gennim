@@ -1,0 +1,4052 @@
+;*** Input1 ***
+;# ST1: 搬入
+;## C0: 原位置復帰
+;### Start: ManualMode && HomePB
+;- Step1_End: ST1ストッパ_BACKWARD_LS && ST1エスケープストッパ_BACKWARD_LS
+;### End: 
+;- Step1 -> ST1ストッパ_BACKWARD
+;- Step1 -> ST1エスケープストッパ_BACKWARD
+;
+
+;*** Output1 ***
+; ST1: 搬入; C0: 原位置復帰
+LD ManualMode
+AND HomePB
+LD ST1_C0_Start
+ORB
+AND Ready
+ANI ST1_C0_End
+OUT ST1_C0_Start
+
+LD ST1_C0_Start
+AND AlwaysOn
+LD ST1_C0_Step1_Start
+ORB
+AND ST1_C0_Start
+OUT ST1_C0_Step1_Start
+
+LD ST1_C0_Step1_Start
+AND CYL1_BACKWARD_LS ; ST1ストッパ_BACKWARD_LS
+AND CYL2_BACKWARD_LS ; ST1エスケープストッパ_BACKWARD_LS
+LD ST1_C0_Step1_End
+ORB
+AND ST1_C0_Start
+OUT ST1_C0_Step1_End
+
+LD ST1_C0_Step1_End
+AND AlwaysOn
+LD ST1_C0_End
+ORB
+AND ST1_C0_Start
+OUT ST1_C0_End
+
+LD ST1_C0_Step1_Start
+LD ST1_C3_Step4_Start
+ANDI ST1_C3_Step5_End
+ORB
+OUT CYL1_BACKWARD ; ST1ストッパ_BACKWARD
+
+LD ST1_C0_Step1_Start
+LD ST1_C1_Step4_Start
+ANDI ST1_C1_Step4_End
+ORB
+OUT CYL1_FORWARD ; ST1エスケープストッパ_BACKWARD
+
+
+
+;*** Input2 ***
+;# ST1: 搬入
+;## C1: 前工程から搬入
+;### Start: AutoRun && not(ST1パレット在籍)
+;- Step1_End: ST1ストッパ_BACKWARD_LS && ST1エスケープストッパ_FORWARD_LS
+;- Step2_End: CIN1_LOADING
+;- Step3_End: ST1パレット在籍 && not(ST1パレット通過)
+;- Step4_End: not(CIN0_LOADING) && ST1エスケープストッパ_BACKWARD_LS
+;### End: ST1パレット在籍
+;- Step1_Start && not(Step1_End) -> ST1エスケープストッパ_FORWARD
+;- Step2_Start && not(Step4_End) -> CIN1_PERMIT
+;- Step3_Start && not(Step4_End) -> CV1_FORWARD_JOG
+;- Step4_Start && not(Step4_End) -> ST1エスケープストッパ_BACKWARD
+;- Step4_Start && not(Step4_End) -> CIN1_LOAD_COMPLETE
+;
+
+;*** Output2 ***
+; ST1: 搬入; C1: 前工程から搬入
+LD AutoRun
+ANDI XXX1 ; ST1パレット在籍
+LD ST1_C1_Start
+ORB
+AND Ready
+ANI ST1_C1_End
+OUT ST1_C1_Start
+
+LD ST1_C1_Start
+AND AlwaysOn
+LD ST1_C1_Step1_Start
+ORB
+AND ST1_C1_Start
+OUT ST1_C1_Step1_Start
+
+LD ST1_C1_Step1_End
+AND AlwaysOn
+LD ST1_C1_Step2_Start
+ORB
+AND ST1_C1_Start
+OUT ST1_C1_Step2_Start
+
+LD ST1_C1_Step2_End
+AND AlwaysOn
+LD ST1_C1_Step3_Start
+ORB
+AND ST1_C1_Start
+OUT ST1_C1_Step3_Start
+
+LD ST1_C1_Step3_End
+AND AlwaysOn
+LD ST1_C1_Step4_Start
+ORB
+AND ST1_C1_Start
+OUT ST1_C1_Step4_Start
+
+LD ST1_C1_Step1_Start
+AND CYL1_BACKWARD_LS ; ST1ストッパ_BACKWARD_LS
+AND XXX2 ; ST1エスケープストッパ_FORWARD_LS
+LD ST1_C1_Step1_End
+ORB
+AND ST1_C1_Start
+OUT ST1_C1_Step1_End
+
+LD ST1_C1_Step2_Start
+AND CIN1_LOADING
+LD ST1_C1_Step2_End
+ORB
+AND ST1_C1_Start
+OUT ST1_C1_Step2_End
+
+LD ST1_C1_Step3_Start
+AND XXX1 ; ST1パレット在籍
+ANDI XXX3 ; ST1パレット通過
+LD ST1_C1_Step3_End
+ORB
+AND ST1_C1_Start
+OUT ST1_C1_Step3_End
+
+LD ST1_C1_Step4_Start
+ANDI CIN0_LOADING
+AND CYL2_BACKWARD_LS ; ST1エスケープストッパ_BACKWARD_LS
+LD ST1_C1_Step4_End
+ORB
+AND ST1_C1_Start
+OUT ST1_C1_Step4_End
+
+LD ST1_C1_Step4_End
+AND XXX1 ; ST1パレット在籍
+LD ST1_C1_End
+ORB
+AND ST1_C1_Start
+OUT ST1_C1_End
+
+LD ST1_C1_Step1_Start
+ANDI ST1_C1_Step1_End
+OUT XXX4 ; ST1エスケープストッパ_FORWARD
+
+LD ST1_C1_Step2_Start
+ANDI ST1_C1_Step4_End
+OUT CIN1_PERMIT
+
+LD ST1_C1_Step3_Start
+ANDI ST1_C1_Step4_End
+LD ST1_C3_Step3_Start
+ANDI ST1_C3_Step4_End
+ORB
+OUT CV1_FORWARD_JOG
+
+LD ST1_C1_Step4_Start
+ANDI ST1_C1_Step4_End
+OUT CIN1_LOAD_COMPLETE
+
+
+
+;*** Input3 ***
+;# ST1: 搬入
+;## C2: 投入RBへコア搬出
+;### Start: AutoRun && ST1コア在籍 && not(ST1_C1_Start)
+;- Step1_End: COUT1_1_PERMIT
+;- Step2_End: not(ST1コア在籍)
+;- Step3_End: COUT1_1_LOAD_COMPLETE
+;### End: not(ST1コア在籍)
+;- Step2_Start && not(Step3_End) -> COUT1_1_LOADING
+;
+
+;*** Output3 ***
+; ST1: 搬入; C2: 投入RBへコア搬出
+LD AutoRun
+AND XXX5 ; ST1コア在籍
+ANDI ST1_C1_Start
+LD ST1_C2_Start
+ORB
+AND Ready
+ANI ST1_C2_End
+OUT ST1_C2_Start
+
+LD ST1_C2_Start
+AND AlwaysOn
+LD ST1_C2_Step1_Start
+ORB
+AND ST1_C2_Start
+OUT ST1_C2_Step1_Start
+
+LD ST1_C2_Step1_End
+AND AlwaysOn
+LD ST1_C2_Step2_Start
+ORB
+AND ST1_C2_Start
+OUT ST1_C2_Step2_Start
+
+LD ST1_C2_Step2_End
+AND AlwaysOn
+LD ST1_C2_Step3_Start
+ORB
+AND ST1_C2_Start
+OUT ST1_C2_Step3_Start
+
+LD ST1_C2_Step1_Start
+AND COUT1_1_PERMIT
+LD ST1_C2_Step1_End
+ORB
+AND ST1_C2_Start
+OUT ST1_C2_Step1_End
+
+LD ST1_C2_Step2_Start
+ANDI XXX5 ; ST1コア在籍
+LD ST1_C2_Step2_End
+ORB
+AND ST1_C2_Start
+OUT ST1_C2_Step2_End
+
+LD ST1_C2_Step3_Start
+AND COUT1_1_LOAD_COMPLETE
+LD ST1_C2_Step3_End
+ORB
+AND ST1_C2_Start
+OUT ST1_C2_Step3_End
+
+LD ST1_C2_Step3_End
+ANDI XXX5 ; ST1コア在籍
+LD ST1_C2_End
+ORB
+AND ST1_C2_Start
+OUT ST1_C2_End
+
+LD ST1_C2_Step2_Start
+ANDI ST1_C2_Step3_End
+OUT COUT1_1_LOADING
+
+
+
+;*** Input4 ***
+;# ST1: 搬入
+;## C3: ST2へパレット搬出
+;### Start: AutoRun && ST1パレット在籍 && not(ST1コア在籍) && not(ST1_C2_Start)
+;- Step1_End: COUT1_2_PERMIT
+;- Step2_End: ST1ストッパ_FORWARD_LS && ST1エスケープストッパ_BACKWARD_LS
+;- Step3_End: not(ST1コア在籍)
+;- Step4_End: COUT1_2_LOAD_COMPLETE
+;- Step5_End: ST1ストッパ_BACKWARD_LS
+;### End: not(ST1パレット在籍) && ST2_C1_End
+;- Step2_Start && not(Step2_End) -> ST1ストッパ_FORWARD
+;- Step2_Start && not(Step4_End) -> COUT1_2_LOADING
+;- Step3_Start && not(Step4_End) -> CV1_FORWARD_JOG
+;- Step4_Start && not(Step5_End) -> ST1ストッパ_BACKWARD
+;
+
+;*** Output4 ***
+; ST1: 搬入; C3: ST2へパレット搬出
+LD AutoRun
+AND XXX1 ; ST1パレット在籍
+ANDI XXX5 ; ST1コア在籍
+ANDI ST1_C2_Start
+LD ST1_C3_Start
+ORB
+AND Ready
+ANI ST1_C3_End
+OUT ST1_C3_Start
+
+LD ST1_C3_Start
+AND AlwaysOn
+LD ST1_C3_Step1_Start
+ORB
+AND ST1_C3_Start
+OUT ST1_C3_Step1_Start
+
+LD ST1_C3_Step1_End
+AND AlwaysOn
+LD ST1_C3_Step2_Start
+ORB
+AND ST1_C3_Start
+OUT ST1_C3_Step2_Start
+
+LD ST1_C3_Step2_End
+AND AlwaysOn
+LD ST1_C3_Step3_Start
+ORB
+AND ST1_C3_Start
+OUT ST1_C3_Step3_Start
+
+LD ST1_C3_Step3_End
+AND AlwaysOn
+LD ST1_C3_Step4_Start
+ORB
+AND ST1_C3_Start
+OUT ST1_C3_Step4_Start
+
+LD ST1_C3_Step4_End
+AND AlwaysOn
+LD ST1_C3_Step5_Start
+ORB
+AND ST1_C3_Start
+OUT ST1_C3_Step5_Start
+
+LD ST1_C3_Step1_Start
+AND COUT1_2_PERMIT
+LD ST1_C3_Step1_End
+ORB
+AND ST1_C3_Start
+OUT ST1_C3_Step1_End
+
+LD ST1_C3_Step2_Start
+AND XXX6 ; ST1ストッパ_FORWARD_LS
+AND CYL2_BACKWARD_LS ; ST1エスケープストッパ_BACKWARD_LS
+LD ST1_C3_Step2_End
+ORB
+AND ST1_C3_Start
+OUT ST1_C3_Step2_End
+
+LD ST1_C3_Step3_Start
+ANDI XXX5 ; ST1コア在籍
+LD ST1_C3_Step3_End
+ORB
+AND ST1_C3_Start
+OUT ST1_C3_Step3_End
+
+LD ST1_C3_Step4_Start
+AND COUT1_2_LOAD_COMPLETE
+LD ST1_C3_Step4_End
+ORB
+AND ST1_C3_Start
+OUT ST1_C3_Step4_End
+
+LD ST1_C3_Step5_Start
+AND CYL1_BACKWARD_LS ; ST1ストッパ_BACKWARD_LS
+LD ST1_C3_Step5_End
+ORB
+AND ST1_C3_Start
+OUT ST1_C3_Step5_End
+
+LD ST1_C3_Step5_End
+ANDI XXX1 ; ST1パレット在籍
+AND ST2_C1_End
+LD ST1_C3_End
+ORB
+AND ST1_C3_Start
+OUT ST1_C3_End
+
+LD ST1_C3_Step2_Start
+ANDI ST1_C3_Step2_End
+OUT XXX7 ; ST1ストッパ_FORWARD
+
+LD ST1_C3_Step2_Start
+ANDI ST1_C3_Step4_End
+LD ST2_C3_Step2_Start
+ANDI ST2_C3_Step4_End
+ORB
+OUT COUT1_2_LOADING
+
+
+
+;*** Input5 ***
+;# ST2: 結果書込
+;- 記憶"ME5_HasOkWork"
+;- 記憶"ME6_HasNgWork"
+;## C0: 原位置復帰
+;### Start: ManualMode && HomePB
+;- Step1_End: ST2ストッパ_BACKWARD_LS && ST2エスケープストッパ_BACKWARD_LS
+;### End: 
+;- Step1 -> ST2ストッパ_BACKWARD
+;- Step1 -> ST2エスケープストッパ_BACKWARD
+;
+
+;*** Output5 ***
+; ST2: 結果書込; C0: 原位置復帰
+LD ManualMode
+AND HomePB
+LD ST2_C0_Start
+ORB
+AND Ready
+ANI ST2_C0_End
+OUT ST2_C0_Start
+
+LD ST2_C0_Start
+AND AlwaysOn
+LD ST2_C0_Step1_Start
+ORB
+AND ST2_C0_Start
+OUT ST2_C0_Step1_Start
+
+LD ST2_C0_Step1_Start
+AND XXX8 ; ST2ストッパ_BACKWARD_LS
+AND XXX9 ; ST2エスケープストッパ_BACKWARD_LS
+LD ST2_C0_Step1_End
+ORB
+AND ST2_C0_Start
+OUT ST2_C0_Step1_End
+
+LD ST2_C0_Step1_End
+AND AlwaysOn
+LD ST2_C0_End
+ORB
+AND ST2_C0_Start
+OUT ST2_C0_End
+
+LD ST2_C0_Step1_Start
+LD ST2_C3_Step4_Start
+ANDI ST2_C3_Step5_End
+ORB
+OUT XXX10 ; ST2ストッパ_BACKWARD
+
+LD ST2_C0_Step1_Start
+LD ST2_C1_Step4_Start
+ANDI ST2_C1_Step4_End
+ORB
+OUT XXX11 ; ST2エスケープストッパ_BACKWARD
+
+
+
+;*** Input6 ***
+;# ST2: 結果書込
+;- 記憶"ME5_HasOkWork"
+;- 記憶"ME6_HasNgWork"
+;## C1: ST1からパレット搬入
+;### Start: AutoRun && not(ST2パレット在籍)
+;- Step1_End: ST2ストッパ_BACKWARD_LS && ST2エスケープストッパ_FORWARD_LS
+;- Step2_End: CIN2_1_LOADING
+;- Step3_End: ST2パレット在籍 && not(ST2パレット通過)
+;- Step4_End: not(CIN2_1_LOADING) && ST2エスケープストッパ_BACKWARD_LS
+;### End: パレット在籍
+;- Step1_Start && not(Step1_End) -> ST2エスケープストッパ_FORWARD
+;- Step2_Start && not(Step4_End) -> CIN2_1_PERMIT
+;- Step3_Start && not(Step4_End) -> CV2_FORWARD_JOG
+;- Step4_Start && not(Step4_End) -> ST2エスケープストッパ_BACKWARD
+;- Step4_Start && not(Step4_End) -> CIN2_1_LOAD_COMPLETE
+;- COUT1_2_LOADING -> CIN2_1_LOADING
+;- CIN2_1_PERMIT -> COUT1_2_PERMIT
+;- CIN2_1_LOAD_COMPLETE -> COUT1_2_LOAD_COMPLETE
+;
+
+;*** Output6 ***
+; ST2: 結果書込; C1: ST1からパレット搬入
+LD AutoRun
+ANDI XXX12 ; ST2パレット在籍
+LD ST2_C1_Start
+ORB
+AND Ready
+ANI ST2_C1_End
+OUT ST2_C1_Start
+
+LD ST2_C1_Start
+AND AlwaysOn
+LD ST2_C1_Step1_Start
+ORB
+AND ST2_C1_Start
+OUT ST2_C1_Step1_Start
+
+LD ST2_C1_Step1_End
+AND AlwaysOn
+LD ST2_C1_Step2_Start
+ORB
+AND ST2_C1_Start
+OUT ST2_C1_Step2_Start
+
+LD ST2_C1_Step2_End
+AND AlwaysOn
+LD ST2_C1_Step3_Start
+ORB
+AND ST2_C1_Start
+OUT ST2_C1_Step3_Start
+
+LD ST2_C1_Step3_End
+AND AlwaysOn
+LD ST2_C1_Step4_Start
+ORB
+AND ST2_C1_Start
+OUT ST2_C1_Step4_Start
+
+LD ST2_C1_Step1_Start
+AND XXX8 ; ST2ストッパ_BACKWARD_LS
+AND XXX13 ; ST2エスケープストッパ_FORWARD_LS
+LD ST2_C1_Step1_End
+ORB
+AND ST2_C1_Start
+OUT ST2_C1_Step1_End
+
+LD ST2_C1_Step2_Start
+AND CIN2_1_LOADING
+LD ST2_C1_Step2_End
+ORB
+AND ST2_C1_Start
+OUT ST2_C1_Step2_End
+
+LD ST2_C1_Step3_Start
+AND XXX12 ; ST2パレット在籍
+ANDI XXX14 ; ST2パレット通過
+LD ST2_C1_Step3_End
+ORB
+AND ST2_C1_Start
+OUT ST2_C1_Step3_End
+
+LD ST2_C1_Step4_Start
+ANDI CIN2_1_LOADING
+AND XXX9 ; ST2エスケープストッパ_BACKWARD_LS
+LD ST2_C1_Step4_End
+ORB
+AND ST2_C1_Start
+OUT ST2_C1_Step4_End
+
+LD ST2_C1_Step4_End
+AND XXX15 ; パレット在籍
+LD ST2_C1_End
+ORB
+AND ST2_C1_Start
+OUT ST2_C1_End
+
+LD ST2_C1_Step1_Start
+ANDI ST2_C1_Step1_End
+OUT XXX16 ; ST2エスケープストッパ_FORWARD
+
+LD ST2_C1_Step2_Start
+ANDI ST2_C1_Step4_End
+OUT CIN2_1_PERMIT
+
+LD ST2_C1_Step3_Start
+ANDI ST2_C1_Step4_End
+LD ST2_C3_Step3_Start
+ANDI ST2_C3_Step4_End
+ORB
+OUT CV2_FORWARD_JOG
+
+LD ST2_C1_Step4_Start
+ANDI ST2_C1_Step4_End
+OUT CIN2_1_LOAD_COMPLETE
+
+LD COUT1_2_LOADING
+OUT CIN2_1_LOADING
+
+LD CIN2_1_PERMIT
+OUT COUT1_2_PERMIT
+
+LD CIN2_1_LOAD_COMPLETE
+OUT COUT1_2_LOAD_COMPLETE
+
+
+
+;*** Input7 ***
+;# ST2: 結果書込
+;- 記憶"ME5_HasOkWork"
+;- 記憶"ME6_HasNgWork"
+;## C2: 返却RBからコア搬入・ID書込
+;### Start: AutoRun && ST2パレット在籍 && not(ST2コア在籍) && not(ME5_HasOkWork) && not(ME6_HasNgWork)
+;- Step1_End: CIN2_2_LOADING
+;- Step2_End: ST2コア在籍
+;- Step3_End: not(CIN2_2_LOADING)
+;- Step4_End: AlwaysOn
+;- Step5_End: ID2_DONE
+;### End: ST2コア在籍 && ID2_DONE && (ME5_HasOkWork || ME6_HasNgWork)
+;- Step1_Start && not(Step3_End) -> CIN2_2_PERMIT
+;- Step2_Start && not(Step3_End) -> CIN2_2_LOAD_COMPLETE
+;- Step4_Start && not(Step4_End) -> MOV "完了フラグ" ID2_DATANAME
+;- Step4_Start && not(Step4_End) && ME5_HasOkWork -> MOV "01" ID2_WRITEDATA
+;- Step4_Start && not(Step4_End) && ME6_HasOkWork -> MOV "02" ID2_WRITEDATA
+;- Step5_Start && not(Step5_End) -> ID2_TRG
+;- CIN2_2_LOAD_COMPLETE && ME3_HasOkWork -SET-> ME5_HasOkWork
+;- CIN2_2_LOAD_COMPLETE && ME4_HasNgWork -SET-> ME6_HasNgWork
+;- COUT7_LOADING -> CIN2_2_LOADING
+;- CIN2_2_PERMIT -> COUT7_PERMIT
+;- CIN2_2_LOAD_COMPLETE -> COUT7_LOAD_COMPLETE
+;
+
+;*** Output7 ***
+; ST2: 結果書込; C2: 返却RBからコア搬入・ID書込
+LD AutoRun
+AND XXX12 ; ST2パレット在籍
+ANDI XXX17 ; ST2コア在籍
+ANDI ME5_HasOkWork
+ANDI ME6_HasNgWork
+LD ST2_C2_Start
+ORB
+AND Ready
+ANI ST2_C2_End
+OUT ST2_C2_Start
+
+LD ST2_C2_Start
+AND AlwaysOn
+LD ST2_C2_Step1_Start
+ORB
+AND ST2_C2_Start
+OUT ST2_C2_Step1_Start
+
+LD ST2_C2_Step1_End
+AND AlwaysOn
+LD ST2_C2_Step2_Start
+ORB
+AND ST2_C2_Start
+OUT ST2_C2_Step2_Start
+
+LD ST2_C2_Step2_End
+AND AlwaysOn
+LD ST2_C2_Step3_Start
+ORB
+AND ST2_C2_Start
+OUT ST2_C2_Step3_Start
+
+LD ST2_C2_Step3_End
+AND AlwaysOn
+LD ST2_C2_Step4_Start
+ORB
+AND ST2_C2_Start
+OUT ST2_C2_Step4_Start
+
+LD ST2_C2_Step4_End
+AND AlwaysOn
+LD ST2_C2_Step5_Start
+ORB
+AND ST2_C2_Start
+OUT ST2_C2_Step5_Start
+
+LD ST2_C2_Step1_Start
+AND CIN2_2_LOADING
+LD ST2_C2_Step1_End
+ORB
+AND ST2_C2_Start
+OUT ST2_C2_Step1_End
+
+LD ST2_C2_Step2_Start
+AND XXX17 ; ST2コア在籍
+LD ST2_C2_Step2_End
+ORB
+AND ST2_C2_Start
+OUT ST2_C2_Step2_End
+
+LD ST2_C2_Step3_Start
+ANDI CIN2_2_LOADING
+LD ST2_C2_Step3_End
+ORB
+AND ST2_C2_Start
+OUT ST2_C2_Step3_End
+
+LD ST2_C2_Step4_Start
+AND AlwaysOn
+LD ST2_C2_Step4_End
+ORB
+AND ST2_C2_Start
+OUT ST2_C2_Step4_End
+
+LD ST2_C2_Step5_Start
+AND ID2_DONE
+LD ST2_C2_Step5_End
+ORB
+AND ST2_C2_Start
+OUT ST2_C2_Step5_End
+
+LD ST2_C2_Step5_End
+AND XXX17 ; ST2コア在籍
+AND ID2_DONE
+AND ME5_HasOkWork
+LD ST2_C2_Step5_End
+AND XXX17 ; ST2コア在籍
+AND ID2_DONE
+AND ME6_HasNgWork
+ORB
+LD ST2_C2_End
+ORB
+AND ST2_C2_Start
+OUT ST2_C2_End
+
+LD ST2_C2_Step1_Start
+ANDI ST2_C2_Step3_End
+OUT CIN2_2_PERMIT
+
+LD ST2_C2_Step2_Start
+ANDI ST2_C2_Step3_End
+OUT CIN2_2_LOAD_COMPLETE
+
+LD ST2_C2_Step4_Start
+ANDI ST2_C2_Step4_End
+MOV "完了フラグ" ID2_DATANAME
+
+LD ST2_C2_Step4_Start
+ANDI ST2_C2_Step4_End
+AND ME5_HasOkWork
+MOV K01 ID2_WRITEDATA
+
+LD ST2_C2_Step4_Start
+ANDI ST2_C2_Step4_End
+AND ME6_HasOkWork
+MOV K02 ID2_WRITEDATA
+
+LD ST2_C2_Step5_Start
+ANDI ST2_C2_Step5_End
+OUT ID2_TRG
+
+LD COUT7_LOADING
+OUT CIN2_2_LOADING
+
+LD CIN2_2_PERMIT
+OUT COUT7_PERMIT
+
+LD CIN2_2_LOAD_COMPLETE
+OUT COUT7_LOAD_COMPLETE
+
+
+
+;*** Input8 ***
+;# ST2: 結果書込
+;- 記憶"ME5_HasOkWork"
+;- 記憶"ME6_HasNgWork"
+;## C3: ST3へ搬出
+;### Start: AutoRun && ST2パレット在籍 && ST2コア在籍 && not(ST2_C2_Start) && (ME5_HasOkWork || ME6_HasNgWork)
+;- Step1_End: COUT2_PERMIT
+;- Step2_End: ST2ストッパ_FORWARD_LS && ST2エスケープストッパ_BACKWARD_LS
+;- Step3_End: not(ST2パレット在籍) && not(ST2パレット通過)
+;- Step4_End: COUT2_LOAD_COMPLETE
+;- Step5_End: ST2ストッパ_BACKWARD_LS
+;### End: not(ST2パレット在籍) && ST3_C1_End && not(ME5_HasOkWork) && not(ME6_HasNgWork)
+;- Step2_Start && not(Step2_End) -> ST2ストッパ_FORWARD
+;- Step2_Start && not(Step4_End) -> COUT1_2_LOADING
+;- Step3_Start && not(Step4_End) -> CV2_FORWARD_JOG
+;- Step4_Start && not(Step5_End) -> ST2ストッパ_BACKWARD
+;- fall(COUT2_LOAD_COMPLETE) -RESET-> ME5_HasOkWork
+;- fall(COUT2_LOAD_COMPLETE) -RESET-> ME6_HasNgWork
+;
+
+;*** Output8 ***
+; ST2: 結果書込; C3: ST3へ搬出
+LD AutoRun
+AND XXX12 ; ST2パレット在籍
+AND XXX17 ; ST2コア在籍
+ANDI ST2_C2_Start
+AND ME5_HasOkWork
+LD AutoRun
+AND XXX12 ; ST2パレット在籍
+AND XXX17 ; ST2コア在籍
+ANDI ST2_C2_Start
+AND ME6_HasNgWork
+ORB
+LD ST2_C3_Start
+ORB
+AND Ready
+ANI ST2_C3_End
+OUT ST2_C3_Start
+
+LD ST2_C3_Start
+AND AlwaysOn
+LD ST2_C3_Step1_Start
+ORB
+AND ST2_C3_Start
+OUT ST2_C3_Step1_Start
+
+LD ST2_C3_Step1_End
+AND AlwaysOn
+LD ST2_C3_Step2_Start
+ORB
+AND ST2_C3_Start
+OUT ST2_C3_Step2_Start
+
+LD ST2_C3_Step2_End
+AND AlwaysOn
+LD ST2_C3_Step3_Start
+ORB
+AND ST2_C3_Start
+OUT ST2_C3_Step3_Start
+
+LD ST2_C3_Step3_End
+AND AlwaysOn
+LD ST2_C3_Step4_Start
+ORB
+AND ST2_C3_Start
+OUT ST2_C3_Step4_Start
+
+LD ST2_C3_Step4_End
+AND AlwaysOn
+LD ST2_C3_Step5_Start
+ORB
+AND ST2_C3_Start
+OUT ST2_C3_Step5_Start
+
+LD ST2_C3_Step1_Start
+AND COUT2_PERMIT
+LD ST2_C3_Step1_End
+ORB
+AND ST2_C3_Start
+OUT ST2_C3_Step1_End
+
+LD ST2_C3_Step2_Start
+AND XXX18 ; ST2ストッパ_FORWARD_LS
+AND XXX9 ; ST2エスケープストッパ_BACKWARD_LS
+LD ST2_C3_Step2_End
+ORB
+AND ST2_C3_Start
+OUT ST2_C3_Step2_End
+
+LD ST2_C3_Step3_Start
+ANDI XXX12 ; ST2パレット在籍
+ANDI XXX14 ; ST2パレット通過
+LD ST2_C3_Step3_End
+ORB
+AND ST2_C3_Start
+OUT ST2_C3_Step3_End
+
+LD ST2_C3_Step4_Start
+AND COUT2_LOAD_COMPLETE
+LD ST2_C3_Step4_End
+ORB
+AND ST2_C3_Start
+OUT ST2_C3_Step4_End
+
+LD ST2_C3_Step5_Start
+AND XXX8 ; ST2ストッパ_BACKWARD_LS
+LD ST2_C3_Step5_End
+ORB
+AND ST2_C3_Start
+OUT ST2_C3_Step5_End
+
+LD ST2_C3_Step5_End
+ANDI XXX12 ; ST2パレット在籍
+AND ST3_C1_End
+ANDI ME5_HasOkWork
+ANDI ME6_HasNgWork
+LD ST2_C3_End
+ORB
+AND ST2_C3_Start
+OUT ST2_C3_End
+
+LD ST2_C3_Step2_Start
+ANDI ST2_C3_Step2_End
+OUT XXX19 ; ST2ストッパ_FORWARD
+
+
+
+;*** Input9 ***
+;# ST3: 良否分別
+;- 記憶"ME7_HasOkWork"
+;- 記憶"ME8_HasNgWork"
+;## C0: 原位置復帰
+;### Start: ManualMode && HomePB
+;- Step1_End: ST3ストッパ_BACKWARD_LS && ST3エスケープストッパ_BACKWARD_LS
+;- Step2_End: ST3パレットシフト_BACKWARD_LS
+;### End: 
+;- Step1_Start && not(Step1_End) -> ST3ストッパ_BACKWARD
+;- Step1_Start && not(Step1_End) -> ST3エスケープストッパ_BACKWARD
+;- Step2_Start && not(Step2_End) -> ST3パレットシフト_BACKWARD
+;
+
+;*** Output9 ***
+; ST3: 良否分別; C0: 原位置復帰
+LD ManualMode
+AND HomePB
+LD ST3_C0_Start
+ORB
+AND Ready
+ANI ST3_C0_End
+OUT ST3_C0_Start
+
+LD ST3_C0_Start
+AND AlwaysOn
+LD ST3_C0_Step1_Start
+ORB
+AND ST3_C0_Start
+OUT ST3_C0_Step1_Start
+
+LD ST3_C0_Step1_End
+AND AlwaysOn
+LD ST3_C0_Step2_Start
+ORB
+AND ST3_C0_Start
+OUT ST3_C0_Step2_Start
+
+LD ST3_C0_Step1_Start
+AND XXX20 ; ST3ストッパ_BACKWARD_LS
+AND XXX21 ; ST3エスケープストッパ_BACKWARD_LS
+LD ST3_C0_Step1_End
+ORB
+AND ST3_C0_Start
+OUT ST3_C0_Step1_End
+
+LD ST3_C0_Step2_Start
+AND XXX22 ; ST3パレットシフト_BACKWARD_LS
+LD ST3_C0_Step2_End
+ORB
+AND ST3_C0_Start
+OUT ST3_C0_Step2_End
+
+LD ST3_C0_Step2_End
+AND AlwaysOn
+LD ST3_C0_End
+ORB
+AND ST3_C0_Start
+OUT ST3_C0_End
+
+LD ST3_C0_Step1_Start
+ANDI ST3_C0_Step1_End
+LD ST3_C1_Step2_Start
+ANDI ST3_C1_Step2_End
+LD ST3_C2_Step6_Start
+ANDI ST3_C2_Step6_End
+LD ST3_C3_Step6_Start
+ANDI ST3_C3_Step6_End
+ORB
+ORB
+ORB
+OUT XXX23 ; ST3ストッパ_BACKWARD
+
+LD ST3_C0_Step1_Start
+ANDI ST3_C0_Step1_End
+LD ST3_C1_Step4_Start
+ANDI ST3_C1_Step4_End
+ORB
+OUT XXX24 ; ST3エスケープストッパ_BACKWARD
+
+LD ST3_C0_Step2_Start
+ANDI ST3_C0_Step2_End
+LD ST3_C1_Step1_Start
+ANDI ST3_C1_Step1_End
+LD ST3_C2_Step1_Start
+ANDI ST3_C2_Step1_End
+LD ST3_C3_Step7_Start
+ANDI ST3_C3_Step7_End
+ORB
+ORB
+ORB
+OUT XXX25 ; ST3パレットシフト_BACKWARD
+
+
+
+;*** Input10 ***
+;# ST3: 良否分別
+;- 記憶"ME7_HasOkWork"
+;- 記憶"ME8_HasNgWork"
+;## C1: ST2から搬入
+;### Start: AutoRun && not(ST3パレット在籍) && not(ME7_HasOkWork) && not(ME8_HasNgWork)
+;- Step1_End: ST3パレットシフト_BACKWARD_LS
+;- Step2_End: ST3ストッパ_BACKWARD_LS && ST3エスケープストッパ_FORWARD_LS
+;- Step3_End: CIN3_LOADING
+;- Step4_End: ST3パレット在籍 && not(ST3パレット通過)
+;- Step5_End: not(CIN3_LOADING) && ST3エスケープストッパ_BACKWARD_LS
+;### End: ST3パレット在籍 && (ME7_HasOkWork || ME8_HasNgWork)
+;- Step1_Start && not(Step1_End) -> ST3パレットシフト_BACKWARD
+;- Step2_Start && not(Step2_End) -> ST3ストッパ_BACKWARD
+;- Step2_Start && not(Step2_End) -> ST3エスケープストッパ_FORWARD
+;- Step3_Start && not(Step4_End) -> CIN3_PERMIT
+;- Step3_Start && not(Step4_End) -> CV3_FORWARD_JOG
+;- Step4_Start && not(Step4_End) -> ST3エスケープストッパ_BACKWARD
+;- Step4_Start && not(Step4_End) -> CIN3_LOAD_COMPLETE
+;- CIN3_LOAD_COMPLETE && ME5_HasOkWork -SET-> ME7_HasOkWork
+;- CIN3_LOAD_COMPLETE && ME6_HasNgWork -SET-> ME8_HasNgWork
+;- COUT2_LOADING -> CIN3_LOADING
+;- CIN3_PERMIT -> COUT2_PERMIT
+;- CIN3_LOAD_COMPLETE -> COUT2_LOAD_COMPLETE
+;
+
+;*** Output10 ***
+; ST3: 良否分別; C1: ST2から搬入
+LD AutoRun
+ANDI XXX26 ; ST3パレット在籍
+ANDI ME7_HasOkWork
+ANDI ME8_HasNgWork
+LD ST3_C1_Start
+ORB
+AND Ready
+ANI ST3_C1_End
+OUT ST3_C1_Start
+
+LD ST3_C1_Start
+AND AlwaysOn
+LD ST3_C1_Step1_Start
+ORB
+AND ST3_C1_Start
+OUT ST3_C1_Step1_Start
+
+LD ST3_C1_Step1_End
+AND AlwaysOn
+LD ST3_C1_Step2_Start
+ORB
+AND ST3_C1_Start
+OUT ST3_C1_Step2_Start
+
+LD ST3_C1_Step2_End
+AND AlwaysOn
+LD ST3_C1_Step3_Start
+ORB
+AND ST3_C1_Start
+OUT ST3_C1_Step3_Start
+
+LD ST3_C1_Step3_End
+AND AlwaysOn
+LD ST3_C1_Step4_Start
+ORB
+AND ST3_C1_Start
+OUT ST3_C1_Step4_Start
+
+LD ST3_C1_Step4_End
+AND AlwaysOn
+LD ST3_C1_Step5_Start
+ORB
+AND ST3_C1_Start
+OUT ST3_C1_Step5_Start
+
+LD ST3_C1_Step1_Start
+AND XXX22 ; ST3パレットシフト_BACKWARD_LS
+LD ST3_C1_Step1_End
+ORB
+AND ST3_C1_Start
+OUT ST3_C1_Step1_End
+
+LD ST3_C1_Step2_Start
+AND XXX20 ; ST3ストッパ_BACKWARD_LS
+AND XXX27 ; ST3エスケープストッパ_FORWARD_LS
+LD ST3_C1_Step2_End
+ORB
+AND ST3_C1_Start
+OUT ST3_C1_Step2_End
+
+LD ST3_C1_Step3_Start
+AND CIN3_LOADING
+LD ST3_C1_Step3_End
+ORB
+AND ST3_C1_Start
+OUT ST3_C1_Step3_End
+
+LD ST3_C1_Step4_Start
+AND XXX26 ; ST3パレット在籍
+ANDI XXX28 ; ST3パレット通過
+LD ST3_C1_Step4_End
+ORB
+AND ST3_C1_Start
+OUT ST3_C1_Step4_End
+
+LD ST3_C1_Step5_Start
+ANDI CIN3_LOADING
+AND XXX21 ; ST3エスケープストッパ_BACKWARD_LS
+LD ST3_C1_Step5_End
+ORB
+AND ST3_C1_Start
+OUT ST3_C1_Step5_End
+
+LD ST3_C1_Step5_End
+AND XXX26 ; ST3パレット在籍
+AND ME7_HasOkWork
+LD ST3_C1_Step5_End
+AND XXX26 ; ST3パレット在籍
+AND ME8_HasNgWork
+ORB
+LD ST3_C1_End
+ORB
+AND ST3_C1_Start
+OUT ST3_C1_End
+
+LD ST3_C1_Step2_Start
+ANDI ST3_C1_Step2_End
+OUT XXX29 ; ST3エスケープストッパ_FORWARD
+
+LD ST3_C1_Step3_Start
+ANDI ST3_C1_Step4_End
+OUT CIN3_PERMIT
+
+LD ST3_C1_Step3_Start
+ANDI ST3_C1_Step4_End
+LD ST3_C2_Step4_Start
+ANDI ST3_C2_Step5_End
+LD ST3_C3_Step4_Start
+ANDI ST3_C3_Step5_End
+ORB
+ORB
+OUT CV3_FORWARD_JOG
+
+LD ST3_C1_Step4_Start
+ANDI ST3_C1_Step4_End
+OUT CIN3_LOAD_COMPLETE
+
+LD COUT2_LOADING
+OUT CIN3_LOADING
+
+LD CIN3_PERMIT
+OUT COUT2_PERMIT
+
+LD CIN3_LOAD_COMPLETE
+OUT COUT2_LOAD_COMPLETE
+
+
+
+;*** Input11 ***
+;# ST3: 良否分別
+;- 記憶"ME7_HasOkWork"
+;- 記憶"ME8_HasNgWork"
+;## C2: ST4へ搬出
+;### Start: AutoRun && ST3パレット在籍 && ME7_HasOkWork && not(ME8_HasNgWork) && not(ST3_C1_Start)
+;- Step1_End: ST3パレットシフト_BACKWARD_LS
+;- Step2_End: COUT3_1_PERMIT
+;- Step3_End: ST3ストッパ_FORWARD_LS && ST3エスケープストッパ_BACKWARD_LS
+;- Step4_End: not(ST3パレット在籍) && not(ST3パレット通過)
+;- Step5_End: COUT3_1_LOAD_COMPLETE
+;- Step6_End: ST3ストッパ_BACKWARD_LS
+;### End: not(ST3パレット在籍) && not(ME7_HasOkWork) && not(ME8_HasNgWork)
+;- Step1_Start && not(Step1_End) -> ST3パレットシフト_BACKWARD
+;- Step3_Start && not(Step3_End) -> ST3ストッパ_FORWARD
+;- Step3_Start && not(Step5_End) -> COUT3_1_LOADING
+;- Step4_Start && not(Step5_End) -> CV3_FORWARD_JOG
+;- Step6_Start && not(Step6_End) -> ST3ストッパ_BACKWARD
+;- fall(COUT3_1_LOAD_COMPLETE) -RESET-> ME7_HasOkWork
+;
+
+;*** Output11 ***
+; ST3: 良否分別; C2: ST4へ搬出
+LD AutoRun
+AND XXX26 ; ST3パレット在籍
+AND ME7_HasOkWork
+ANDI ME8_HasNgWork
+ANDI ST3_C1_Start
+LD ST3_C2_Start
+ORB
+AND Ready
+ANI ST3_C2_End
+OUT ST3_C2_Start
+
+LD ST3_C2_Start
+AND AlwaysOn
+LD ST3_C2_Step1_Start
+ORB
+AND ST3_C2_Start
+OUT ST3_C2_Step1_Start
+
+LD ST3_C2_Step1_End
+AND AlwaysOn
+LD ST3_C2_Step2_Start
+ORB
+AND ST3_C2_Start
+OUT ST3_C2_Step2_Start
+
+LD ST3_C2_Step2_End
+AND AlwaysOn
+LD ST3_C2_Step3_Start
+ORB
+AND ST3_C2_Start
+OUT ST3_C2_Step3_Start
+
+LD ST3_C2_Step3_End
+AND AlwaysOn
+LD ST3_C2_Step4_Start
+ORB
+AND ST3_C2_Start
+OUT ST3_C2_Step4_Start
+
+LD ST3_C2_Step4_End
+AND AlwaysOn
+LD ST3_C2_Step5_Start
+ORB
+AND ST3_C2_Start
+OUT ST3_C2_Step5_Start
+
+LD ST3_C2_Step5_End
+AND AlwaysOn
+LD ST3_C2_Step6_Start
+ORB
+AND ST3_C2_Start
+OUT ST3_C2_Step6_Start
+
+LD ST3_C2_Step1_Start
+AND XXX22 ; ST3パレットシフト_BACKWARD_LS
+LD ST3_C2_Step1_End
+ORB
+AND ST3_C2_Start
+OUT ST3_C2_Step1_End
+
+LD ST3_C2_Step2_Start
+AND COUT3_1_PERMIT
+LD ST3_C2_Step2_End
+ORB
+AND ST3_C2_Start
+OUT ST3_C2_Step2_End
+
+LD ST3_C2_Step3_Start
+AND XXX30 ; ST3ストッパ_FORWARD_LS
+AND XXX21 ; ST3エスケープストッパ_BACKWARD_LS
+LD ST3_C2_Step3_End
+ORB
+AND ST3_C2_Start
+OUT ST3_C2_Step3_End
+
+LD ST3_C2_Step4_Start
+ANDI XXX26 ; ST3パレット在籍
+ANDI XXX28 ; ST3パレット通過
+LD ST3_C2_Step4_End
+ORB
+AND ST3_C2_Start
+OUT ST3_C2_Step4_End
+
+LD ST3_C2_Step5_Start
+AND COUT3_1_LOAD_COMPLETE
+LD ST3_C2_Step5_End
+ORB
+AND ST3_C2_Start
+OUT ST3_C2_Step5_End
+
+LD ST3_C2_Step6_Start
+AND XXX20 ; ST3ストッパ_BACKWARD_LS
+LD ST3_C2_Step6_End
+ORB
+AND ST3_C2_Start
+OUT ST3_C2_Step6_End
+
+LD ST3_C2_Step6_End
+ANDI XXX26 ; ST3パレット在籍
+ANDI ME7_HasOkWork
+ANDI ME8_HasNgWork
+LD ST3_C2_End
+ORB
+AND ST3_C2_Start
+OUT ST3_C2_End
+
+LD ST3_C2_Step3_Start
+ANDI ST3_C2_Step3_End
+LD ST3_C3_Step3_Start
+ANDI ST3_C3_Step3_End
+ORB
+OUT XXX31 ; ST3ストッパ_FORWARD
+
+LD ST3_C2_Step3_Start
+ANDI ST3_C2_Step5_End
+OUT COUT3_1_LOADING
+
+
+
+;*** Input12 ***
+;# ST3: 良否分別
+;- 記憶"ME7_HasOkWork"
+;- 記憶"ME8_HasNgWork"
+;## C3: ST5へ搬出
+;### Start: AutoRun && ST3パレット在籍 && not(ME7_HasOkWork) && ME8_HasNgWork && not(ST3_C1_Start)
+;- Step1_End: ST3パレットシフト_FORWARD_LS
+;- Step2_End: COUT3_2_PERMIT
+;- Step3_End: ST3ストッパ_FORWARD_LS && ST3エスケープストッパ_BACKWARD_LS
+;- Step4_End: not(ST3パレット在籍) && not(ST3パレット通過)
+;- Step5_End: COUT3_2_LOAD_COMPLETE
+;- Step6_End: ST3ストッパ_BACKWARD_LS
+;- Step7_End: ST3パレットシフト_BACKWARD_LS
+;### End: not(ST3パレット在籍) && not(ME7_HasOkWork) && not(ME8_HasNgWork)
+;- Step1_Start && not(Step1_End) -> ST3パレットシフト_FORWARD
+;- Step3_Start && not(Step3_End) -> ST3ストッパ_FORWARD
+;- Step3_Start && not(Step5_End) -> COUT3_2_LOADING
+;- Step4_Start && not(Step5_End) -> CV3_FORWARD_JOG
+;- Step6_Start && not(Step6_End) -> ST3ストッパ_BACKWARD
+;- Step7_Start && not(Step7_End) -> ST3パレットシフト_BACKWARD
+;- fall(COUT3_2_LOAD_COMPLETE) -RESET-> ME8_HasNgWork
+;
+
+;*** Output12 ***
+; ST3: 良否分別; C3: ST5へ搬出
+LD AutoRun
+AND XXX26 ; ST3パレット在籍
+ANDI ME7_HasOkWork
+AND ME8_HasNgWork
+ANDI ST3_C1_Start
+LD ST3_C3_Start
+ORB
+AND Ready
+ANI ST3_C3_End
+OUT ST3_C3_Start
+
+LD ST3_C3_Start
+AND AlwaysOn
+LD ST3_C3_Step1_Start
+ORB
+AND ST3_C3_Start
+OUT ST3_C3_Step1_Start
+
+LD ST3_C3_Step1_End
+AND AlwaysOn
+LD ST3_C3_Step2_Start
+ORB
+AND ST3_C3_Start
+OUT ST3_C3_Step2_Start
+
+LD ST3_C3_Step2_End
+AND AlwaysOn
+LD ST3_C3_Step3_Start
+ORB
+AND ST3_C3_Start
+OUT ST3_C3_Step3_Start
+
+LD ST3_C3_Step3_End
+AND AlwaysOn
+LD ST3_C3_Step4_Start
+ORB
+AND ST3_C3_Start
+OUT ST3_C3_Step4_Start
+
+LD ST3_C3_Step4_End
+AND AlwaysOn
+LD ST3_C3_Step5_Start
+ORB
+AND ST3_C3_Start
+OUT ST3_C3_Step5_Start
+
+LD ST3_C3_Step5_End
+AND AlwaysOn
+LD ST3_C3_Step6_Start
+ORB
+AND ST3_C3_Start
+OUT ST3_C3_Step6_Start
+
+LD ST3_C3_Step6_End
+AND AlwaysOn
+LD ST3_C3_Step7_Start
+ORB
+AND ST3_C3_Start
+OUT ST3_C3_Step7_Start
+
+LD ST3_C3_Step1_Start
+AND XXX32 ; ST3パレットシフト_FORWARD_LS
+LD ST3_C3_Step1_End
+ORB
+AND ST3_C3_Start
+OUT ST3_C3_Step1_End
+
+LD ST3_C3_Step2_Start
+AND COUT3_2_PERMIT
+LD ST3_C3_Step2_End
+ORB
+AND ST3_C3_Start
+OUT ST3_C3_Step2_End
+
+LD ST3_C3_Step3_Start
+AND XXX30 ; ST3ストッパ_FORWARD_LS
+AND XXX21 ; ST3エスケープストッパ_BACKWARD_LS
+LD ST3_C3_Step3_End
+ORB
+AND ST3_C3_Start
+OUT ST3_C3_Step3_End
+
+LD ST3_C3_Step4_Start
+ANDI XXX26 ; ST3パレット在籍
+ANDI XXX28 ; ST3パレット通過
+LD ST3_C3_Step4_End
+ORB
+AND ST3_C3_Start
+OUT ST3_C3_Step4_End
+
+LD ST3_C3_Step5_Start
+AND COUT3_2_LOAD_COMPLETE
+LD ST3_C3_Step5_End
+ORB
+AND ST3_C3_Start
+OUT ST3_C3_Step5_End
+
+LD ST3_C3_Step6_Start
+AND XXX20 ; ST3ストッパ_BACKWARD_LS
+LD ST3_C3_Step6_End
+ORB
+AND ST3_C3_Start
+OUT ST3_C3_Step6_End
+
+LD ST3_C3_Step7_Start
+AND XXX22 ; ST3パレットシフト_BACKWARD_LS
+LD ST3_C3_Step7_End
+ORB
+AND ST3_C3_Start
+OUT ST3_C3_Step7_End
+
+LD ST3_C3_Step7_End
+ANDI XXX26 ; ST3パレット在籍
+ANDI ME7_HasOkWork
+ANDI ME8_HasNgWork
+LD ST3_C3_End
+ORB
+AND ST3_C3_Start
+OUT ST3_C3_End
+
+LD ST3_C3_Step1_Start
+ANDI ST3_C3_Step1_End
+OUT XXX33 ; ST3パレットシフト_FORWARD
+
+LD ST3_C3_Step3_Start
+ANDI ST3_C3_Step5_End
+OUT COUT3_2_LOADING
+
+
+
+;*** Input13 ***
+;# ST4: 良品搬送
+;## C0: 原位置復帰
+;### Start: ManualMode && HomePB
+;- Step1_End: ST4ストッパ_BACKWARD_LS && ST4エスケープストッパ_BACKWARD_LS
+;### End: ST4ストッパ_BACKWARD_LS && ST4エスケープストッパ_BACKWARD_LS
+;- Step1_Start && not(Step1_End) -> ST4ストッパ_BACKWARD
+;- Step1_Start && not(Step1_End) -> ST4エスケープストッパ_BACKWARD
+;
+
+;*** Output13 ***
+; ST4: 良品搬送; C0: 原位置復帰
+LD ManualMode
+AND HomePB
+LD ST4_C0_Start
+ORB
+AND Ready
+ANI ST4_C0_End
+OUT ST4_C0_Start
+
+LD ST4_C0_Start
+AND AlwaysOn
+LD ST4_C0_Step1_Start
+ORB
+AND ST4_C0_Start
+OUT ST4_C0_Step1_Start
+
+LD ST4_C0_Step1_Start
+AND XXX34 ; ST4ストッパ_BACKWARD_LS
+AND XXX35 ; ST4エスケープストッパ_BACKWARD_LS
+LD ST4_C0_Step1_End
+ORB
+AND ST4_C0_Start
+OUT ST4_C0_Step1_End
+
+LD ST4_C0_Step1_End
+AND XXX34 ; ST4ストッパ_BACKWARD_LS
+AND XXX35 ; ST4エスケープストッパ_BACKWARD_LS
+LD ST4_C0_End
+ORB
+AND ST4_C0_Start
+OUT ST4_C0_End
+
+LD ST4_C0_Step1_Start
+ANDI ST4_C0_Step1_End
+LD ST4_C1_Step1_Start
+ANDI ST4_C1_Step1_End
+LD ST4_C2_Step4_Start
+ANDI ST4_C2_Step5_End
+ORB
+ORB
+OUT XXX36 ; ST4ストッパ_BACKWARD
+
+LD ST4_C0_Step1_Start
+ANDI ST4_C0_Step1_End
+LD ST4_C1_Step3_Start
+ANDI ST4_C1_Step3_End
+ORB
+OUT XXX37 ; ST4エスケープストッパ_BACKWARD
+
+
+
+;*** Input14 ***
+;# ST4: 良品搬送
+;## C1: ST3から搬入
+;### Start: AutoRun && not(ST4パレット在籍)
+;- Step1_End: ST4ストッパ_BACKWARD_LS && ST4エスケープストッパ_FORWARD_LS
+;- Step2_End: CIN4_LOADING
+;- Step3_End: ST4パレット在籍 && not(ST4パレット通過)
+;- Step4_End: not(CIN4_LOADING) && ST4エスケープストッパ_BACKWARD_LS
+;### End: ST4パレット在籍
+;- Step1_Start && not(Step1_End) -> ST4ストッパ_BACKWARD
+;- Step1_Start && not(Step1_End) -> ST4エスケープストッパ_FORWARD
+;- Step2_Start && not(Step3_End) -> CIN4_PERMIT
+;- Step2_Start && not(Step3_End) -> CV4_FORWARD_JOG
+;- Step3_Start && not(Step3_End) -> ST4エスケープストッパ_BACKWARD
+;- Step3_Start && not(Step3_End) -> CIN4_LOAD_COMPLETE
+;- COUT3_1_LOADING -> CIN4_LOADING
+;- CIN4_PERMIT -> COUT3_1_PERMIT
+;- CIN4_LOAD_COMPLETE -> COUT3_1_LOAD_COMPLETE
+;
+
+;*** Output14 ***
+; ST4: 良品搬送; C1: ST3から搬入
+LD AutoRun
+ANDI XXX38 ; ST4パレット在籍
+LD ST4_C1_Start
+ORB
+AND Ready
+ANI ST4_C1_End
+OUT ST4_C1_Start
+
+LD ST4_C1_Start
+AND AlwaysOn
+LD ST4_C1_Step1_Start
+ORB
+AND ST4_C1_Start
+OUT ST4_C1_Step1_Start
+
+LD ST4_C1_Step1_End
+AND AlwaysOn
+LD ST4_C1_Step2_Start
+ORB
+AND ST4_C1_Start
+OUT ST4_C1_Step2_Start
+
+LD ST4_C1_Step2_End
+AND AlwaysOn
+LD ST4_C1_Step3_Start
+ORB
+AND ST4_C1_Start
+OUT ST4_C1_Step3_Start
+
+LD ST4_C1_Step3_End
+AND AlwaysOn
+LD ST4_C1_Step4_Start
+ORB
+AND ST4_C1_Start
+OUT ST4_C1_Step4_Start
+
+LD ST4_C1_Step1_Start
+AND XXX34 ; ST4ストッパ_BACKWARD_LS
+AND XXX39 ; ST4エスケープストッパ_FORWARD_LS
+LD ST4_C1_Step1_End
+ORB
+AND ST4_C1_Start
+OUT ST4_C1_Step1_End
+
+LD ST4_C1_Step2_Start
+AND CIN4_LOADING
+LD ST4_C1_Step2_End
+ORB
+AND ST4_C1_Start
+OUT ST4_C1_Step2_End
+
+LD ST4_C1_Step3_Start
+AND XXX38 ; ST4パレット在籍
+ANDI XXX40 ; ST4パレット通過
+LD ST4_C1_Step3_End
+ORB
+AND ST4_C1_Start
+OUT ST4_C1_Step3_End
+
+LD ST4_C1_Step4_Start
+ANDI CIN4_LOADING
+AND XXX35 ; ST4エスケープストッパ_BACKWARD_LS
+LD ST4_C1_Step4_End
+ORB
+AND ST4_C1_Start
+OUT ST4_C1_Step4_End
+
+LD ST4_C1_Step4_End
+AND XXX38 ; ST4パレット在籍
+LD ST4_C1_End
+ORB
+AND ST4_C1_Start
+OUT ST4_C1_End
+
+LD ST4_C1_Step1_Start
+ANDI ST4_C1_Step1_End
+OUT XXX41 ; ST4エスケープストッパ_FORWARD
+
+LD ST4_C1_Step2_Start
+ANDI ST4_C1_Step3_End
+OUT CIN4_PERMIT
+
+LD ST4_C1_Step2_Start
+ANDI ST4_C1_Step3_End
+LD ST4_C2_Step3_Start
+ANDI ST4_C2_Step4_End
+ORB
+OUT CV4_FORWARD_JOG
+
+LD ST4_C1_Step3_Start
+ANDI ST4_C1_Step3_End
+OUT CIN4_LOAD_COMPLETE
+
+LD COUT3_1_LOADING
+OUT CIN4_LOADING
+
+LD CIN4_PERMIT
+OUT COUT3_1_PERMIT
+
+LD CIN4_LOAD_COMPLETE
+OUT COUT3_1_LOAD_COMPLETE
+
+
+
+;*** Input15 ***
+;# ST4: 良品搬送
+;## C2: 後工程へ搬出
+;### Start: AutoRun && ST4パレット在籍 && not(ST4_C1_Start)
+;- Step1_End: COUT4_PERMIT
+;- Step2_End: ST4ストッパ_FORWARD_LS && ST4エスケープストッパ_BACKWARD_LS
+;- Step3_End: not(ST4パレット在籍) && not(ST4パレット通過)
+;- Step4_End: COUT4_LOAD_COMPLETE
+;- Step5_End: ST4ストッパ_BACKWARD_LS
+;### End: not(ST4パレット在籍)
+;- Step2_Start && not(Step2_End) -> ST4ストッパ_FORWARD
+;- Step2_Start && not(Step4_End) -> COUT4_LOADING
+;- Step3_Start && not(Step4_End) -> CV4_FORWARD_JOG
+;- Step4_Start && not(Step5_End) -> ST4ストッパ_BACKWARD
+;
+;
+
+;*** Output15 ***
+; ST4: 良品搬送; C2: 後工程へ搬出
+LD AutoRun
+AND XXX38 ; ST4パレット在籍
+ANDI ST4_C1_Start
+LD ST4_C2_Start
+ORB
+AND Ready
+ANI ST4_C2_End
+OUT ST4_C2_Start
+
+LD ST4_C2_Start
+AND AlwaysOn
+LD ST4_C2_Step1_Start
+ORB
+AND ST4_C2_Start
+OUT ST4_C2_Step1_Start
+
+LD ST4_C2_Step1_End
+AND AlwaysOn
+LD ST4_C2_Step2_Start
+ORB
+AND ST4_C2_Start
+OUT ST4_C2_Step2_Start
+
+LD ST4_C2_Step2_End
+AND AlwaysOn
+LD ST4_C2_Step3_Start
+ORB
+AND ST4_C2_Start
+OUT ST4_C2_Step3_Start
+
+LD ST4_C2_Step3_End
+AND AlwaysOn
+LD ST4_C2_Step4_Start
+ORB
+AND ST4_C2_Start
+OUT ST4_C2_Step4_Start
+
+LD ST4_C2_Step4_End
+AND AlwaysOn
+LD ST4_C2_Step5_Start
+ORB
+AND ST4_C2_Start
+OUT ST4_C2_Step5_Start
+
+LD ST4_C2_Step1_Start
+AND COUT4_PERMIT
+LD ST4_C2_Step1_End
+ORB
+AND ST4_C2_Start
+OUT ST4_C2_Step1_End
+
+LD ST4_C2_Step2_Start
+AND XXX42 ; ST4ストッパ_FORWARD_LS
+AND XXX35 ; ST4エスケープストッパ_BACKWARD_LS
+LD ST4_C2_Step2_End
+ORB
+AND ST4_C2_Start
+OUT ST4_C2_Step2_End
+
+LD ST4_C2_Step3_Start
+ANDI XXX38 ; ST4パレット在籍
+ANDI XXX40 ; ST4パレット通過
+LD ST4_C2_Step3_End
+ORB
+AND ST4_C2_Start
+OUT ST4_C2_Step3_End
+
+LD ST4_C2_Step4_Start
+AND COUT4_LOAD_COMPLETE
+LD ST4_C2_Step4_End
+ORB
+AND ST4_C2_Start
+OUT ST4_C2_Step4_End
+
+LD ST4_C2_Step5_Start
+AND XXX34 ; ST4ストッパ_BACKWARD_LS
+LD ST4_C2_Step5_End
+ORB
+AND ST4_C2_Start
+OUT ST4_C2_Step5_End
+
+LD ST4_C2_Step5_End
+ANDI XXX38 ; ST4パレット在籍
+LD ST4_C2_End
+ORB
+AND ST4_C2_Start
+OUT ST4_C2_End
+
+LD ST4_C2_Step2_Start
+ANDI ST4_C2_Step2_End
+OUT XXX43 ; ST4ストッパ_FORWARD
+
+LD ST4_C2_Step2_Start
+ANDI ST4_C2_Step4_End
+OUT COUT4_LOADING
+
+
+
+;*** Input16 ***
+;# ST5: 不良払出
+;## C0: 原位置復帰
+;### Start: ManualMode && HomePB
+;- Step1_End: ST5ストッパ_BACKWARD_LS && ST5エスケープストッパ_BACKWARD_LS
+;### End: ST5ストッパ_BACKWARD_LS && ST5エスケープストッパ_BACKWARD_LS
+;- Step1_Start && not(Step1_End) -> ST5ストッパ_BACKWARD
+;- Step1_Start && not(Step1_End) -> ST5エスケープストッパ_BACKWARD
+;
+
+;*** Output16 ***
+; ST5: 不良払出; C0: 原位置復帰
+LD ManualMode
+AND HomePB
+LD ST5_C0_Start
+ORB
+AND Ready
+ANI ST5_C0_End
+OUT ST5_C0_Start
+
+LD ST5_C0_Start
+AND AlwaysOn
+LD ST5_C0_Step1_Start
+ORB
+AND ST5_C0_Start
+OUT ST5_C0_Step1_Start
+
+LD ST5_C0_Step1_Start
+AND XXX44 ; ST5ストッパ_BACKWARD_LS
+AND XXX45 ; ST5エスケープストッパ_BACKWARD_LS
+LD ST5_C0_Step1_End
+ORB
+AND ST5_C0_Start
+OUT ST5_C0_Step1_End
+
+LD ST5_C0_Step1_End
+AND XXX44 ; ST5ストッパ_BACKWARD_LS
+AND XXX45 ; ST5エスケープストッパ_BACKWARD_LS
+LD ST5_C0_End
+ORB
+AND ST5_C0_Start
+OUT ST5_C0_End
+
+LD ST5_C0_Step1_Start
+ANDI ST5_C0_Step1_End
+LD ST5_C1_Step1_Start
+ANDI ST5_C1_Step1_End
+ORB
+OUT XXX46 ; ST5ストッパ_BACKWARD
+
+LD ST5_C0_Step1_Start
+ANDI ST5_C0_Step1_End
+LD ST5_C1_Step3_Start
+ANDI ST5_C1_Step3_End
+ORB
+OUT XXX47 ; ST5エスケープストッパ_BACKWARD
+
+
+
+;*** Input17 ***
+;# ST5: 不良払出
+;## C1: ST3から搬入
+;### Start: AutoRun && not(ST5パレット在籍)
+;- Step1_End: ST5ストッパ_BACKWARD_LS && ST5エスケープストッパ_FORWARD_LS
+;- Step2_End: CIN5_LOADING
+;- Step3_End: ST5パレット在籍 && not(ST5パレット通過)
+;- Step4_End: not(CIN5_LOADING) && ST5エスケープストッパ_BACKWARD_LS
+;### End: ST5パレット在籍
+;- Step1_Start && not(Step1_End) -> ST5ストッパ_BACKWARD
+;- Step1_Start && not(Step1_End) -> ST5エスケープストッパ_FORWARD
+;- Step2_Start && not(Step3_End) -> CIN5_PERMIT
+;- Step2_Start && not(Step3_End) -> CV5_FORWARD_JOG
+;- Step3_Start && not(Step3_End) -> ST5エスケープストッパ_BACKWARD
+;- Step3_Start && not(Step3_End) -> CIN5_LOAD_COMPLETE
+;- COUT3_2_LOADING -> CIN5_LOADING
+;- CIN5_PERMIT -> COUT3_2_PERMIT
+;- CIN5_LOAD_COMPLETE -> COUT3_2_LOAD_COMPLETE
+;
+
+;*** Output17 ***
+; ST5: 不良払出; C1: ST3から搬入
+LD AutoRun
+ANDI XXX48 ; ST5パレット在籍
+LD ST5_C1_Start
+ORB
+AND Ready
+ANI ST5_C1_End
+OUT ST5_C1_Start
+
+LD ST5_C1_Start
+AND AlwaysOn
+LD ST5_C1_Step1_Start
+ORB
+AND ST5_C1_Start
+OUT ST5_C1_Step1_Start
+
+LD ST5_C1_Step1_End
+AND AlwaysOn
+LD ST5_C1_Step2_Start
+ORB
+AND ST5_C1_Start
+OUT ST5_C1_Step2_Start
+
+LD ST5_C1_Step2_End
+AND AlwaysOn
+LD ST5_C1_Step3_Start
+ORB
+AND ST5_C1_Start
+OUT ST5_C1_Step3_Start
+
+LD ST5_C1_Step3_End
+AND AlwaysOn
+LD ST5_C1_Step4_Start
+ORB
+AND ST5_C1_Start
+OUT ST5_C1_Step4_Start
+
+LD ST5_C1_Step1_Start
+AND XXX44 ; ST5ストッパ_BACKWARD_LS
+AND XXX49 ; ST5エスケープストッパ_FORWARD_LS
+LD ST5_C1_Step1_End
+ORB
+AND ST5_C1_Start
+OUT ST5_C1_Step1_End
+
+LD ST5_C1_Step2_Start
+AND CIN5_LOADING
+LD ST5_C1_Step2_End
+ORB
+AND ST5_C1_Start
+OUT ST5_C1_Step2_End
+
+LD ST5_C1_Step3_Start
+AND XXX48 ; ST5パレット在籍
+ANDI XXX50 ; ST5パレット通過
+LD ST5_C1_Step3_End
+ORB
+AND ST5_C1_Start
+OUT ST5_C1_Step3_End
+
+LD ST5_C1_Step4_Start
+ANDI CIN5_LOADING
+AND XXX45 ; ST5エスケープストッパ_BACKWARD_LS
+LD ST5_C1_Step4_End
+ORB
+AND ST5_C1_Start
+OUT ST5_C1_Step4_End
+
+LD ST5_C1_Step4_End
+AND XXX48 ; ST5パレット在籍
+LD ST5_C1_End
+ORB
+AND ST5_C1_Start
+OUT ST5_C1_End
+
+LD ST5_C1_Step1_Start
+ANDI ST5_C1_Step1_End
+OUT XXX51 ; ST5エスケープストッパ_FORWARD
+
+LD ST5_C1_Step2_Start
+ANDI ST5_C1_Step3_End
+OUT CIN5_PERMIT
+
+LD ST5_C1_Step2_Start
+ANDI ST5_C1_Step3_End
+OUT CV5_FORWARD_JOG
+
+LD ST5_C1_Step3_Start
+ANDI ST5_C1_Step3_End
+OUT CIN5_LOAD_COMPLETE
+
+LD COUT3_2_LOADING
+OUT CIN5_LOADING
+
+LD CIN5_PERMIT
+OUT COUT3_2_PERMIT
+
+LD CIN5_LOAD_COMPLETE
+OUT COUT3_2_LOAD_COMPLETE
+
+
+
+;*** Input18 ***
+;# ST6: 投入RB
+;- 記憶"ME1_HasWork"
+;## C0: 原位置復帰
+;### Start: ManualMode && HomePB
+;- Step1_End: RB1_READY
+;- Step2_End: AlwaysOn
+;- Step3_End: RB1_DONE
+;### End: RB1_TASK_NO == 99 && RB1_DONE
+;- Step1_Start && not(Step1_End) -> MOV "99" RB1_TASK_NO
+;- Step2_Start && not(Step2_End) -> RB1_TRG
+;
+
+;*** Output18 ***
+; ST6: 投入RB; C0: 原位置復帰
+LD ManualMode
+AND HomePB
+LD ST6_C0_Start
+ORB
+AND Ready
+ANI ST6_C0_End
+OUT ST6_C0_Start
+
+LD ST6_C0_Start
+AND AlwaysOn
+LD ST6_C0_Step1_Start
+ORB
+AND ST6_C0_Start
+OUT ST6_C0_Step1_Start
+
+LD ST6_C0_Step1_End
+AND AlwaysOn
+LD ST6_C0_Step2_Start
+ORB
+AND ST6_C0_Start
+OUT ST6_C0_Step2_Start
+
+LD ST6_C0_Step2_End
+AND AlwaysOn
+LD ST6_C0_Step3_Start
+ORB
+AND ST6_C0_Start
+OUT ST6_C0_Step3_Start
+
+LD ST6_C0_Step1_Start
+AND RB1_READY
+LD ST6_C0_Step1_End
+ORB
+AND ST6_C0_Start
+OUT ST6_C0_Step1_End
+
+LD ST6_C0_Step2_Start
+AND AlwaysOn
+LD ST6_C0_Step2_End
+ORB
+AND ST6_C0_Start
+OUT ST6_C0_Step2_End
+
+LD ST6_C0_Step3_Start
+AND RB1_DONE
+LD ST6_C0_Step3_End
+ORB
+AND ST6_C0_Start
+OUT ST6_C0_Step3_End
+
+LD ST6_C0_Step3_End
+AND= RB1_TASK_NO K99
+AND RB1_DONE
+LD ST6_C0_End
+ORB
+AND ST6_C0_Start
+OUT ST6_C0_End
+
+LD ST6_C0_Step1_Start
+ANDI ST6_C0_Step1_End
+MOV K99 RB1_TASK_NO
+
+LD ST6_C0_Step2_Start
+ANDI ST6_C0_Step2_End
+LD ST6_C1_Step2_Start
+ANDI ST6_C1_Step3_End
+LD ST6_C2_Step3_Start
+ANDI ST6_C2_Step4_End
+LD ST6_C3_Step3_Start
+ANDI ST6_C3_Step4_End
+LD ST6_C4_Step3_Start
+ANDI ST6_C4_Step4_End
+ORB
+ORB
+ORB
+ORB
+OUT RB1_TRG
+
+
+
+;*** Input19 ***
+;# ST6: 投入RB
+;- 記憶"ME1_HasWork"
+;## C1: ST1から搬入
+;### Start: AutoRun && not(ME1_HasWork)
+;- Step1_End: RB1_READY
+;- Step2_End: CIN6_LOADING
+;- Step3_End: RB1_DONE
+;- Step4_End: not(CIN6_LOADING)
+;### End: RB1_TASK_NO == 1 && RB1_DONE && ME1_HasWork
+;- Step1_Start && not(Step1_End) -> MOV "01" RB1_TASK_NO
+;- Step2_Start && not(Step3_End) -> CIN6_PERMIT
+;- Step2_Start && not(Step3_End) -> RB1_TRG
+;- Step3_Start && not(Step3_End) -> CIN6_LOAD_COMPLETE
+;- CIN6_LOAD_COMPLETE -SET-> ME1_HasWork
+;- COUT1_1_LOADING -> CIN6_LOADING
+;- CIN6_PERMIT -> COUT1_1_PERMIT
+;- CIN6_LOAD_COMPLETE -> COUT1_1_LOAD_COMPLETE
+;
+
+;*** Output19 ***
+; ST6: 投入RB; C1: ST1から搬入
+LD AutoRun
+ANDI ME1_HasWork
+LD ST6_C1_Start
+ORB
+AND Ready
+ANI ST6_C1_End
+OUT ST6_C1_Start
+
+LD ST6_C1_Start
+AND AlwaysOn
+LD ST6_C1_Step1_Start
+ORB
+AND ST6_C1_Start
+OUT ST6_C1_Step1_Start
+
+LD ST6_C1_Step1_End
+AND AlwaysOn
+LD ST6_C1_Step2_Start
+ORB
+AND ST6_C1_Start
+OUT ST6_C1_Step2_Start
+
+LD ST6_C1_Step2_End
+AND AlwaysOn
+LD ST6_C1_Step3_Start
+ORB
+AND ST6_C1_Start
+OUT ST6_C1_Step3_Start
+
+LD ST6_C1_Step3_End
+AND AlwaysOn
+LD ST6_C1_Step4_Start
+ORB
+AND ST6_C1_Start
+OUT ST6_C1_Step4_Start
+
+LD ST6_C1_Step1_Start
+AND RB1_READY
+LD ST6_C1_Step1_End
+ORB
+AND ST6_C1_Start
+OUT ST6_C1_Step1_End
+
+LD ST6_C1_Step2_Start
+AND CIN6_LOADING
+LD ST6_C1_Step2_End
+ORB
+AND ST6_C1_Start
+OUT ST6_C1_Step2_End
+
+LD ST6_C1_Step3_Start
+AND RB1_DONE
+LD ST6_C1_Step3_End
+ORB
+AND ST6_C1_Start
+OUT ST6_C1_Step3_End
+
+LD ST6_C1_Step4_Start
+ANDI CIN6_LOADING
+LD ST6_C1_Step4_End
+ORB
+AND ST6_C1_Start
+OUT ST6_C1_Step4_End
+
+LD ST6_C1_Step4_End
+AND= RB1_TASK_NO K1
+AND RB1_DONE
+AND ME1_HasWork
+LD ST6_C1_End
+ORB
+AND ST6_C1_Start
+OUT ST6_C1_End
+
+LD ST6_C1_Step1_Start
+ANDI ST6_C1_Step1_End
+MOV K01 RB1_TASK_NO
+
+LD ST6_C1_Step2_Start
+ANDI ST6_C1_Step3_End
+OUT CIN6_PERMIT
+
+LD ST6_C1_Step3_Start
+ANDI ST6_C1_Step3_End
+OUT CIN6_LOAD_COMPLETE
+
+LD COUT1_1_LOADING
+OUT CIN6_LOADING
+
+LD CIN6_PERMIT
+OUT COUT1_1_PERMIT
+
+LD CIN6_LOAD_COMPLETE
+OUT COUT1_1_LOAD_COMPLETE
+
+
+
+;*** Input20 ***
+;# ST6: 投入RB
+;- 記憶"ME1_HasWork"
+;## C2: 加熱1へ搬出
+;### Start: AutoRun && ME1_HasWork && not(ST6_C1_Start) && not(加熱1在籍)
+;- Step1_End: COUT6_1_PERMIT
+;- Step2_End: RB1_READY
+;- Step3_End: RB1_DONE
+;- Step4_End: COUT6_1_LOAD_COMPLETE
+;### End: RB1_TASK_NO == 2 && RB1_DONE && not(ME1_HasWork)
+;- Step2_Start && not(Step2_End) -> MOV "02" RB1_TASK_NO
+;- Step2_Start && not(Step4_End) -> COUT6_1_LOADING
+;- Step3_Start && not(Step4_End) -> RB1_TRG
+;- fall(COUT6_1_LOAD_COMPLETE) -RESET-> ME1_HasWork
+;
+
+;*** Output20 ***
+; ST6: 投入RB; C2: 加熱1へ搬出
+LD AutoRun
+AND ME1_HasWork
+ANDI ST6_C1_Start
+ANDI XXX52 ; 加熱1在籍
+LD ST6_C2_Start
+ORB
+AND Ready
+ANI ST6_C2_End
+OUT ST6_C2_Start
+
+LD ST6_C2_Start
+AND AlwaysOn
+LD ST6_C2_Step1_Start
+ORB
+AND ST6_C2_Start
+OUT ST6_C2_Step1_Start
+
+LD ST6_C2_Step1_End
+AND AlwaysOn
+LD ST6_C2_Step2_Start
+ORB
+AND ST6_C2_Start
+OUT ST6_C2_Step2_Start
+
+LD ST6_C2_Step2_End
+AND AlwaysOn
+LD ST6_C2_Step3_Start
+ORB
+AND ST6_C2_Start
+OUT ST6_C2_Step3_Start
+
+LD ST6_C2_Step3_End
+AND AlwaysOn
+LD ST6_C2_Step4_Start
+ORB
+AND ST6_C2_Start
+OUT ST6_C2_Step4_Start
+
+LD ST6_C2_Step1_Start
+AND COUT6_1_PERMIT
+LD ST6_C2_Step1_End
+ORB
+AND ST6_C2_Start
+OUT ST6_C2_Step1_End
+
+LD ST6_C2_Step2_Start
+AND RB1_READY
+LD ST6_C2_Step2_End
+ORB
+AND ST6_C2_Start
+OUT ST6_C2_Step2_End
+
+LD ST6_C2_Step3_Start
+AND RB1_DONE
+LD ST6_C2_Step3_End
+ORB
+AND ST6_C2_Start
+OUT ST6_C2_Step3_End
+
+LD ST6_C2_Step4_Start
+AND COUT6_1_LOAD_COMPLETE
+LD ST6_C2_Step4_End
+ORB
+AND ST6_C2_Start
+OUT ST6_C2_Step4_End
+
+LD ST6_C2_Step4_End
+AND= RB1_TASK_NO K2
+AND RB1_DONE
+ANDI ME1_HasWork
+LD ST6_C2_End
+ORB
+AND ST6_C2_Start
+OUT ST6_C2_End
+
+LD ST6_C2_Step2_Start
+ANDI ST6_C2_Step2_End
+MOV K02 RB1_TASK_NO
+
+LD ST6_C2_Step2_Start
+ANDI ST6_C2_Step4_End
+OUT COUT6_1_LOADING
+
+
+
+;*** Input21 ***
+;# ST6: 投入RB
+;- 記憶"ME1_HasWork"
+;## C3: 加熱2へ搬出
+;### Start: AutoRun && ME1_HasWork && not(ST6_C1_Start) && 加熱1在籍 && not(加熱2在籍)
+;- Step1_End: COUT6_2_PERMIT
+;- Step2_End: RB1_READY
+;- Step3_End: RB1_DONE
+;- Step4_End: COUT6_2_LOAD_COMPLETE
+;### End: RB1_TASK_NO == 3 && RB1_DONE && not(ME1_HasWork)
+;- Step2_Start && not(Step2_End) -> MOV "03" RB1_TASK_NO
+;- Step2_Start && not(Step4_End) -> COUT6_2_LOADING
+;- Step3_Start && not(Step4_End) -> RB1_TRG
+;- fall(COUT6_2_LOAD_COMPLETE) -RESET-> ME1_HasWork
+;
+
+;*** Output21 ***
+; ST6: 投入RB; C3: 加熱2へ搬出
+LD AutoRun
+AND ME1_HasWork
+ANDI ST6_C1_Start
+AND XXX52 ; 加熱1在籍
+ANDI XXX53 ; 加熱2在籍
+LD ST6_C3_Start
+ORB
+AND Ready
+ANI ST6_C3_End
+OUT ST6_C3_Start
+
+LD ST6_C3_Start
+AND AlwaysOn
+LD ST6_C3_Step1_Start
+ORB
+AND ST6_C3_Start
+OUT ST6_C3_Step1_Start
+
+LD ST6_C3_Step1_End
+AND AlwaysOn
+LD ST6_C3_Step2_Start
+ORB
+AND ST6_C3_Start
+OUT ST6_C3_Step2_Start
+
+LD ST6_C3_Step2_End
+AND AlwaysOn
+LD ST6_C3_Step3_Start
+ORB
+AND ST6_C3_Start
+OUT ST6_C3_Step3_Start
+
+LD ST6_C3_Step3_End
+AND AlwaysOn
+LD ST6_C3_Step4_Start
+ORB
+AND ST6_C3_Start
+OUT ST6_C3_Step4_Start
+
+LD ST6_C3_Step1_Start
+AND COUT6_2_PERMIT
+LD ST6_C3_Step1_End
+ORB
+AND ST6_C3_Start
+OUT ST6_C3_Step1_End
+
+LD ST6_C3_Step2_Start
+AND RB1_READY
+LD ST6_C3_Step2_End
+ORB
+AND ST6_C3_Start
+OUT ST6_C3_Step2_End
+
+LD ST6_C3_Step3_Start
+AND RB1_DONE
+LD ST6_C3_Step3_End
+ORB
+AND ST6_C3_Start
+OUT ST6_C3_Step3_End
+
+LD ST6_C3_Step4_Start
+AND COUT6_2_LOAD_COMPLETE
+LD ST6_C3_Step4_End
+ORB
+AND ST6_C3_Start
+OUT ST6_C3_Step4_End
+
+LD ST6_C3_Step4_End
+AND= RB1_TASK_NO K3
+AND RB1_DONE
+ANDI ME1_HasWork
+LD ST6_C3_End
+ORB
+AND ST6_C3_Start
+OUT ST6_C3_End
+
+LD ST6_C3_Step2_Start
+ANDI ST6_C3_Step2_End
+MOV K03 RB1_TASK_NO
+
+LD ST6_C3_Step2_Start
+ANDI ST6_C3_Step4_End
+OUT COUT6_2_LOADING
+
+
+
+;*** Input22 ***
+;# ST6: 投入RB
+;- 記憶"ME1_HasWork"
+;## C4: 加熱3へ搬出
+;### Start: AutoRun && ME1_HasWork && not(ST6_C1_Start) && 加熱1在籍 && 加熱2在籍 && not(加熱3在籍)
+;- Step1_End: COUT6_3_PERMIT
+;- Step2_End: RB1_READY
+;- Step3_End: RB1_DONE
+;- Step4_End: COUT6_3_LOAD_COMPLETE
+;### End: RB1_TASK_NO == 4 && RB1_DONE && not(ME1_HasWork)
+;- Step2_Start && not(Step2_End) -> MOV "04" RB1_TASK_NO
+;- Step2_Start && not(Step4_End) -> COUT6_3_LOADING
+;- Step3_Start && not(Step4_End) -> RB1_TRG
+;- fall(COUT6_3_LOAD_COMPLETE) -RESET-> ME1_HasWork
+;
+
+;*** Output22 ***
+; ST6: 投入RB; C4: 加熱3へ搬出
+LD AutoRun
+AND ME1_HasWork
+ANDI ST6_C1_Start
+AND XXX52 ; 加熱1在籍
+AND XXX53 ; 加熱2在籍
+ANDI XXX54 ; 加熱3在籍
+LD ST6_C4_Start
+ORB
+AND Ready
+ANI ST6_C4_End
+OUT ST6_C4_Start
+
+LD ST6_C4_Start
+AND AlwaysOn
+LD ST6_C4_Step1_Start
+ORB
+AND ST6_C4_Start
+OUT ST6_C4_Step1_Start
+
+LD ST6_C4_Step1_End
+AND AlwaysOn
+LD ST6_C4_Step2_Start
+ORB
+AND ST6_C4_Start
+OUT ST6_C4_Step2_Start
+
+LD ST6_C4_Step2_End
+AND AlwaysOn
+LD ST6_C4_Step3_Start
+ORB
+AND ST6_C4_Start
+OUT ST6_C4_Step3_Start
+
+LD ST6_C4_Step3_End
+AND AlwaysOn
+LD ST6_C4_Step4_Start
+ORB
+AND ST6_C4_Start
+OUT ST6_C4_Step4_Start
+
+LD ST6_C4_Step1_Start
+AND COUT6_3_PERMIT
+LD ST6_C4_Step1_End
+ORB
+AND ST6_C4_Start
+OUT ST6_C4_Step1_End
+
+LD ST6_C4_Step2_Start
+AND RB1_READY
+LD ST6_C4_Step2_End
+ORB
+AND ST6_C4_Start
+OUT ST6_C4_Step2_End
+
+LD ST6_C4_Step3_Start
+AND RB1_DONE
+LD ST6_C4_Step3_End
+ORB
+AND ST6_C4_Start
+OUT ST6_C4_Step3_End
+
+LD ST6_C4_Step4_Start
+AND COUT6_3_LOAD_COMPLETE
+LD ST6_C4_Step4_End
+ORB
+AND ST6_C4_Start
+OUT ST6_C4_Step4_End
+
+LD ST6_C4_Step4_End
+AND= RB1_TASK_NO K4
+AND RB1_DONE
+ANDI ME1_HasWork
+LD ST6_C4_End
+ORB
+AND ST6_C4_Start
+OUT ST6_C4_End
+
+LD ST6_C4_Step2_Start
+ANDI ST6_C4_Step2_End
+MOV K04 RB1_TASK_NO
+
+LD ST6_C4_Step2_Start
+ANDI ST6_C4_Step4_End
+OUT COUT6_3_LOADING
+
+
+
+;*** Input23 ***
+;# ST7: 返却RB
+;- 記憶"ME3_HasOkWork"
+;- 記憶"ME4_HasNgWork"
+;## C0: 原位置復帰
+;### Start: ManualMode && HomePB
+;- Step1_End: RB2_READY
+;- Step2_End: AlwaysOn
+;- Step3_End: RB2_DONE
+;### End: RB2_TASK_NO == 99 && RB2_DONE
+;- Step1_Start && not(Step1_End) -> MOV "99" RB2_TASK_NO
+;- Step2_Start && not(Step2_End) -> RB2_TRG
+;
+
+;*** Output23 ***
+; ST7: 返却RB; C0: 原位置復帰
+LD ManualMode
+AND HomePB
+LD ST7_C0_Start
+ORB
+AND Ready
+ANI ST7_C0_End
+OUT ST7_C0_Start
+
+LD ST7_C0_Start
+AND AlwaysOn
+LD ST7_C0_Step1_Start
+ORB
+AND ST7_C0_Start
+OUT ST7_C0_Step1_Start
+
+LD ST7_C0_Step1_End
+AND AlwaysOn
+LD ST7_C0_Step2_Start
+ORB
+AND ST7_C0_Start
+OUT ST7_C0_Step2_Start
+
+LD ST7_C0_Step2_End
+AND AlwaysOn
+LD ST7_C0_Step3_Start
+ORB
+AND ST7_C0_Start
+OUT ST7_C0_Step3_Start
+
+LD ST7_C0_Step1_Start
+AND RB2_READY
+LD ST7_C0_Step1_End
+ORB
+AND ST7_C0_Start
+OUT ST7_C0_Step1_End
+
+LD ST7_C0_Step2_Start
+AND AlwaysOn
+LD ST7_C0_Step2_End
+ORB
+AND ST7_C0_Start
+OUT ST7_C0_Step2_End
+
+LD ST7_C0_Step3_Start
+AND RB2_DONE
+LD ST7_C0_Step3_End
+ORB
+AND ST7_C0_Start
+OUT ST7_C0_Step3_End
+
+LD ST7_C0_Step3_End
+AND= RB2_TASK_NO K99
+AND RB2_DONE
+LD ST7_C0_End
+ORB
+AND ST7_C0_Start
+OUT ST7_C0_End
+
+LD ST7_C0_Step1_Start
+ANDI ST7_C0_Step1_End
+MOV K99 RB2_TASK_NO
+
+LD ST7_C0_Step2_Start
+ANDI ST7_C0_Step2_End
+LD ST7_C1_Step2_Start
+ANDI ST7_C1_Step3_End
+LD ST7_C2_Step2_Start
+ANDI ST7_C2_Step3_End
+LD ST7_C3_Step2_Start
+ANDI ST7_C3_Step3_End
+LD ST7_C4_Step3_Start
+ANDI ST7_C4_Step4_End
+ORB
+ORB
+ORB
+ORB
+OUT RB2_TRG
+
+
+
+;*** Input24 ***
+;# ST7: 返却RB
+;- 記憶"ME3_HasOkWork"
+;- 記憶"ME4_HasNgWork"
+;## C1: 加熱1から搬入
+;### Start: AutoRun && not(ME3_HasOkWork) && not(ME4_HasNgWork) && ST8_C2_Start
+;- Step1_End: RB2_READY
+;- Step2_End: CIN7_1_LOADING
+;- Step3_End: RB2_DONE
+;- Step4_End: not(CIN7_1_LOADING)
+;### End: RB2_TASK_NO == 1 && RB2_DONE && (ME3_HasOkWork || ME4_HasNgWork)
+;- Step1_Start && not(Step1_End) -> MOV "01" RB2_TASK_NO
+;- Step2_Start && not(Step3_End) -> CIN7_1_PERMIT
+;- Step2_Start && not(Step3_End) -> RB2_TRG
+;- Step3_Start && not(Step3_End) -> CIN7_1_LOAD_COMPLETE
+;- CIN7_1_LOAD_COMPLETE && 加熱1正常 -SET-> ME3_HasOkWork
+;- CIN7_1_LOAD_COMPLETE && not(加熱1正常) -SET-> ME4_HasNgWork
+;- COUT8_LOADING -> CIN7_1_LOADING
+;- CIN7_1_PERMIT -> COUT8_PERMIT
+;- CIN7_1_LOAD_COMPLETE -> COUT8_LOAD_COMPLETE
+;
+
+;*** Output24 ***
+; ST7: 返却RB; C1: 加熱1から搬入
+LD AutoRun
+ANDI ME3_HasOkWork
+ANDI ME4_HasNgWork
+AND ST8_C2_Start
+LD ST7_C1_Start
+ORB
+AND Ready
+ANI ST7_C1_End
+OUT ST7_C1_Start
+
+LD ST7_C1_Start
+AND AlwaysOn
+LD ST7_C1_Step1_Start
+ORB
+AND ST7_C1_Start
+OUT ST7_C1_Step1_Start
+
+LD ST7_C1_Step1_End
+AND AlwaysOn
+LD ST7_C1_Step2_Start
+ORB
+AND ST7_C1_Start
+OUT ST7_C1_Step2_Start
+
+LD ST7_C1_Step2_End
+AND AlwaysOn
+LD ST7_C1_Step3_Start
+ORB
+AND ST7_C1_Start
+OUT ST7_C1_Step3_Start
+
+LD ST7_C1_Step3_End
+AND AlwaysOn
+LD ST7_C1_Step4_Start
+ORB
+AND ST7_C1_Start
+OUT ST7_C1_Step4_Start
+
+LD ST7_C1_Step1_Start
+AND RB2_READY
+LD ST7_C1_Step1_End
+ORB
+AND ST7_C1_Start
+OUT ST7_C1_Step1_End
+
+LD ST7_C1_Step2_Start
+AND CIN7_1_LOADING
+LD ST7_C1_Step2_End
+ORB
+AND ST7_C1_Start
+OUT ST7_C1_Step2_End
+
+LD ST7_C1_Step3_Start
+AND RB2_DONE
+LD ST7_C1_Step3_End
+ORB
+AND ST7_C1_Start
+OUT ST7_C1_Step3_End
+
+LD ST7_C1_Step4_Start
+ANDI CIN7_1_LOADING
+LD ST7_C1_Step4_End
+ORB
+AND ST7_C1_Start
+OUT ST7_C1_Step4_End
+
+LD ST7_C1_Step4_End
+AND= RB2_TASK_NO K1
+AND RB2_DONE
+AND ME3_HasOkWork
+LD ST7_C1_Step4_End
+AND= RB2_TASK_NO K1
+AND RB2_DONE
+AND ME4_HasNgWork
+ORB
+LD ST7_C1_End
+ORB
+AND ST7_C1_Start
+OUT ST7_C1_End
+
+LD ST7_C1_Step1_Start
+ANDI ST7_C1_Step1_End
+MOV K01 RB2_TASK_NO
+
+LD ST7_C1_Step2_Start
+ANDI ST7_C1_Step3_End
+OUT CIN7_1_PERMIT
+
+LD ST7_C1_Step3_Start
+ANDI ST7_C1_Step3_End
+OUT CIN7_1_LOAD_COMPLETE
+
+LD COUT8_LOADING
+OUT CIN7_1_LOADING
+
+LD CIN7_1_PERMIT
+OUT COUT8_PERMIT
+
+LD CIN7_1_LOAD_COMPLETE
+OUT COUT8_LOAD_COMPLETE
+
+
+
+;*** Input25 ***
+;# ST7: 返却RB
+;- 記憶"ME3_HasOkWork"
+;- 記憶"ME4_HasNgWork"
+;## C2: 加熱2から搬入
+;### Start: AutoRun && not(ME3_HasOkWork) && not(ME4_HasNgWork) && ST9_C2_Start && not(ST7_C1_Start)
+;- Step1_End: RB2_READY
+;- Step2_End: CIN7_2_LOADING
+;- Step3_End: RB2_DONE
+;- Step4_End: not(CIN7_2_LOADING)
+;### End: RB2_TASK_NO == 2 && RB2_DONE && (ME3_HasOkWork || ME4_HasNgWork)
+;- Step1_Start && not(Step1_End) -> MOV "02" RB2_TASK_NO
+;- Step2_Start && not(Step3_End) -> CIN7_2_PERMIT
+;- Step2_Start && not(Step3_End) -> RB2_TRG
+;- Step3_Start && not(Step3_End) -> CIN7_2_LOAD_COMPLETE
+;- CIN7_2_LOAD_COMPLETE && 加熱2正常 -SET-> ME3_HasOkWork
+;- CIN7_2_LOAD_COMPLETE && not(加熱2正常) -SET-> ME4_HasNgWork
+;- COUT9_LOADING -> CIN7_2_LOADING
+;- CIN7_2_PERMIT -> COUT9_PERMIT
+;- CIN7_2_LOAD_COMPLETE -> COUT9_LOAD_COMPLETE
+;
+
+;*** Output25 ***
+; ST7: 返却RB; C2: 加熱2から搬入
+LD AutoRun
+ANDI ME3_HasOkWork
+ANDI ME4_HasNgWork
+AND ST9_C2_Start
+ANDI ST7_C1_Start
+LD ST7_C2_Start
+ORB
+AND Ready
+ANI ST7_C2_End
+OUT ST7_C2_Start
+
+LD ST7_C2_Start
+AND AlwaysOn
+LD ST7_C2_Step1_Start
+ORB
+AND ST7_C2_Start
+OUT ST7_C2_Step1_Start
+
+LD ST7_C2_Step1_End
+AND AlwaysOn
+LD ST7_C2_Step2_Start
+ORB
+AND ST7_C2_Start
+OUT ST7_C2_Step2_Start
+
+LD ST7_C2_Step2_End
+AND AlwaysOn
+LD ST7_C2_Step3_Start
+ORB
+AND ST7_C2_Start
+OUT ST7_C2_Step3_Start
+
+LD ST7_C2_Step3_End
+AND AlwaysOn
+LD ST7_C2_Step4_Start
+ORB
+AND ST7_C2_Start
+OUT ST7_C2_Step4_Start
+
+LD ST7_C2_Step1_Start
+AND RB2_READY
+LD ST7_C2_Step1_End
+ORB
+AND ST7_C2_Start
+OUT ST7_C2_Step1_End
+
+LD ST7_C2_Step2_Start
+AND CIN7_2_LOADING
+LD ST7_C2_Step2_End
+ORB
+AND ST7_C2_Start
+OUT ST7_C2_Step2_End
+
+LD ST7_C2_Step3_Start
+AND RB2_DONE
+LD ST7_C2_Step3_End
+ORB
+AND ST7_C2_Start
+OUT ST7_C2_Step3_End
+
+LD ST7_C2_Step4_Start
+ANDI CIN7_2_LOADING
+LD ST7_C2_Step4_End
+ORB
+AND ST7_C2_Start
+OUT ST7_C2_Step4_End
+
+LD ST7_C2_Step4_End
+AND= RB2_TASK_NO K2
+AND RB2_DONE
+AND ME3_HasOkWork
+LD ST7_C2_Step4_End
+AND= RB2_TASK_NO K2
+AND RB2_DONE
+AND ME4_HasNgWork
+ORB
+LD ST7_C2_End
+ORB
+AND ST7_C2_Start
+OUT ST7_C2_End
+
+LD ST7_C2_Step1_Start
+ANDI ST7_C2_Step1_End
+MOV K02 RB2_TASK_NO
+
+LD ST7_C2_Step2_Start
+ANDI ST7_C2_Step3_End
+OUT CIN7_2_PERMIT
+
+LD ST7_C2_Step3_Start
+ANDI ST7_C2_Step3_End
+OUT CIN7_2_LOAD_COMPLETE
+
+LD COUT9_LOADING
+OUT CIN7_2_LOADING
+
+LD CIN7_2_PERMIT
+OUT COUT9_PERMIT
+
+LD CIN7_2_LOAD_COMPLETE
+OUT COUT9_LOAD_COMPLETE
+
+
+
+;*** Input26 ***
+;# ST7: 返却RB
+;- 記憶"ME3_HasOkWork"
+;- 記憶"ME4_HasNgWork"
+;## C3: 加熱3から搬入
+;### Start: AutoRun && not(ME3_HasOkWork) && not(ME4_HasNgWork) && ST10_C2_Start && not(ST7_C1_Start) && not(ST7_C2_Start)
+;- Step1_End: RB2_READY
+;- Step2_End: CIN7_3_LOADING
+;- Step3_End: RB2_DONE
+;- Step4_End: not(CIN7_3_LOADING)
+;### End: RB2_TASK_NO == 3 && RB2_DONE && (ME3_HasOkWork || ME4_HasNgWork)
+;- Step1_Start && not(Step1_End) -> MOV "03" RB2_TASK_NO
+;- Step2_Start && not(Step3_End) -> CIN7_3_PERMIT
+;- Step2_Start && not(Step3_End) -> RB2_TRG
+;- Step3_Start && not(Step3_End) -> CIN7_3_LOAD_COMPLETE
+;- CIN7_3_LOAD_COMPLETE && 加熱3正常 -SET-> ME3_HasOkWork
+;- CIN7_3_LOAD_COMPLETE && not(加熱3正常) -SET-> ME4_HasNgWork
+;- COUT10_LOADING -> CIN7_3_LOADING
+;- CIN7_3_PERMIT -> COUT10_PERMIT
+;- CIN7_3_LOAD_COMPLETE -> COUT10_LOAD_COMPLETE
+;
+;
+
+;*** Output26 ***
+; ST7: 返却RB; C3: 加熱3から搬入
+LD AutoRun
+ANDI ME3_HasOkWork
+ANDI ME4_HasNgWork
+AND ST10_C2_Start
+ANDI ST7_C1_Start
+ANDI ST7_C2_Start
+LD ST7_C3_Start
+ORB
+AND Ready
+ANI ST7_C3_End
+OUT ST7_C3_Start
+
+LD ST7_C3_Start
+AND AlwaysOn
+LD ST7_C3_Step1_Start
+ORB
+AND ST7_C3_Start
+OUT ST7_C3_Step1_Start
+
+LD ST7_C3_Step1_End
+AND AlwaysOn
+LD ST7_C3_Step2_Start
+ORB
+AND ST7_C3_Start
+OUT ST7_C3_Step2_Start
+
+LD ST7_C3_Step2_End
+AND AlwaysOn
+LD ST7_C3_Step3_Start
+ORB
+AND ST7_C3_Start
+OUT ST7_C3_Step3_Start
+
+LD ST7_C3_Step3_End
+AND AlwaysOn
+LD ST7_C3_Step4_Start
+ORB
+AND ST7_C3_Start
+OUT ST7_C3_Step4_Start
+
+LD ST7_C3_Step1_Start
+AND RB2_READY
+LD ST7_C3_Step1_End
+ORB
+AND ST7_C3_Start
+OUT ST7_C3_Step1_End
+
+LD ST7_C3_Step2_Start
+AND CIN7_3_LOADING
+LD ST7_C3_Step2_End
+ORB
+AND ST7_C3_Start
+OUT ST7_C3_Step2_End
+
+LD ST7_C3_Step3_Start
+AND RB2_DONE
+LD ST7_C3_Step3_End
+ORB
+AND ST7_C3_Start
+OUT ST7_C3_Step3_End
+
+LD ST7_C3_Step4_Start
+ANDI CIN7_3_LOADING
+LD ST7_C3_Step4_End
+ORB
+AND ST7_C3_Start
+OUT ST7_C3_Step4_End
+
+LD ST7_C3_Step4_End
+AND= RB2_TASK_NO K3
+AND RB2_DONE
+AND ME3_HasOkWork
+LD ST7_C3_Step4_End
+AND= RB2_TASK_NO K3
+AND RB2_DONE
+AND ME4_HasNgWork
+ORB
+LD ST7_C3_End
+ORB
+AND ST7_C3_Start
+OUT ST7_C3_End
+
+LD ST7_C3_Step1_Start
+ANDI ST7_C3_Step1_End
+MOV K03 RB2_TASK_NO
+
+LD ST7_C3_Step2_Start
+ANDI ST7_C3_Step3_End
+OUT CIN7_3_PERMIT
+
+LD ST7_C3_Step3_Start
+ANDI ST7_C3_Step3_End
+OUT CIN7_3_LOAD_COMPLETE
+
+LD COUT10_LOADING
+OUT CIN7_3_LOADING
+
+LD CIN7_3_PERMIT
+OUT COUT10_PERMIT
+
+LD CIN7_3_LOAD_COMPLETE
+OUT COUT10_LOAD_COMPLETE
+
+
+
+;*** Input27 ***
+;# ST7: 返却RB
+;- 記憶"ME3_HasOkWork"
+;- 記憶"ME4_HasNgWork"
+;## C4: ST2へ搬出
+;### Start: AutoRun && (ME3_HasOkWork || ME4_HasNgWork)
+;- Step1_End: COUT7_PERMIT
+;- Step2_End: RB2_READY
+;- Step3_End: RB2_DONE
+;- Step4_End: COUT7_LOAD_COMPLETE
+;### End: RB2_TASK_NO == 4 && RB2_DONE && not(ME3_HasOkWork) && not(ME4_HasNgWork)
+;- Step2_Start && not(Step2_End) -> MOV "04" RB2_TASK_NO
+;- Step2_Start && not(Step4_End) -> COUT7_LOADING
+;- Step3_Start && not(Step4_End) -> RB2_TRG
+;- fall(COUT7_LOAD_COMPLETE) -RESET-> ME3_HasOkWork
+;- fall(COUT7_LOAD_COMPLETE) -RESET-> ME4_HasNgWork
+;
+;
+
+;*** Output27 ***
+; ST7: 返却RB; C4: ST2へ搬出
+LD AutoRun
+AND ME3_HasOkWork
+LD AutoRun
+AND ME4_HasNgWork
+ORB
+LD ST7_C4_Start
+ORB
+AND Ready
+ANI ST7_C4_End
+OUT ST7_C4_Start
+
+LD ST7_C4_Start
+AND AlwaysOn
+LD ST7_C4_Step1_Start
+ORB
+AND ST7_C4_Start
+OUT ST7_C4_Step1_Start
+
+LD ST7_C4_Step1_End
+AND AlwaysOn
+LD ST7_C4_Step2_Start
+ORB
+AND ST7_C4_Start
+OUT ST7_C4_Step2_Start
+
+LD ST7_C4_Step2_End
+AND AlwaysOn
+LD ST7_C4_Step3_Start
+ORB
+AND ST7_C4_Start
+OUT ST7_C4_Step3_Start
+
+LD ST7_C4_Step3_End
+AND AlwaysOn
+LD ST7_C4_Step4_Start
+ORB
+AND ST7_C4_Start
+OUT ST7_C4_Step4_Start
+
+LD ST7_C4_Step1_Start
+AND COUT7_PERMIT
+LD ST7_C4_Step1_End
+ORB
+AND ST7_C4_Start
+OUT ST7_C4_Step1_End
+
+LD ST7_C4_Step2_Start
+AND RB2_READY
+LD ST7_C4_Step2_End
+ORB
+AND ST7_C4_Start
+OUT ST7_C4_Step2_End
+
+LD ST7_C4_Step3_Start
+AND RB2_DONE
+LD ST7_C4_Step3_End
+ORB
+AND ST7_C4_Start
+OUT ST7_C4_Step3_End
+
+LD ST7_C4_Step4_Start
+AND COUT7_LOAD_COMPLETE
+LD ST7_C4_Step4_End
+ORB
+AND ST7_C4_Start
+OUT ST7_C4_Step4_End
+
+LD ST7_C4_Step4_End
+AND= RB2_TASK_NO K4
+AND RB2_DONE
+ANDI ME3_HasOkWork
+ANDI ME4_HasNgWork
+LD ST7_C4_End
+ORB
+AND ST7_C4_Start
+OUT ST7_C4_End
+
+LD ST7_C4_Step2_Start
+ANDI ST7_C4_Step2_End
+MOV K04 RB2_TASK_NO
+
+LD ST7_C4_Step2_Start
+ANDI ST7_C4_Step4_End
+OUT COUT7_LOADING
+
+
+
+;*** Input28 ***
+;# ST8: 加熱1
+;## C0: 原位置復帰
+;### Start: ManualMode && HomePB
+;- Step1_End: ST8ワーククランプ_BACKWARD_LS
+;### End: ST8ワーククランプ_BACKWARD_LS
+;- Step1_Start && not(Step1_End) -> ST8ワーククランプ_BACKWARD
+;
+
+;*** Output28 ***
+; ST8: 加熱1; C0: 原位置復帰
+LD ManualMode
+AND HomePB
+LD ST8_C0_Start
+ORB
+AND Ready
+ANI ST8_C0_End
+OUT ST8_C0_Start
+
+LD ST8_C0_Start
+AND AlwaysOn
+LD ST8_C0_Step1_Start
+ORB
+AND ST8_C0_Start
+OUT ST8_C0_Step1_Start
+
+LD ST8_C0_Step1_Start
+AND XXX58 ; ST8ワーククランプ_BACKWARD_LS
+LD ST8_C0_Step1_End
+ORB
+AND ST8_C0_Start
+OUT ST8_C0_Step1_End
+
+LD ST8_C0_Step1_End
+AND XXX58 ; ST8ワーククランプ_BACKWARD_LS
+LD ST8_C0_End
+ORB
+AND ST8_C0_Start
+OUT ST8_C0_End
+
+LD ST8_C0_Step1_Start
+ANDI ST8_C0_Step1_End
+LD ST8_C1_Step1_Start
+ANDI ST8_C1_Step1_End
+LD ST8_C2_Step1_Start
+ANDI ST8_C2_Step1_End
+ORB
+ORB
+OUT XXX59 ; ST8ワーククランプ_BACKWARD
+
+
+
+;*** Input29 ***
+;# ST8: 加熱1
+;## C1: 投入RBから搬入・加熱
+;### Start: AutoRun && not(ST8コア在籍)
+;- Step1_End: ST8ワーククランプ_BACKWARD_LS
+;- Step2_End: CIN8_LOADING
+;- Step3_End: ST8コア在籍
+;- Step4_End: not(CIN8_LOADING)
+;- Step5_End: ST8ワーククランプ_FORWARD_LS
+;- Step6_End: ST8加熱ON
+;- Step7_End: ST8加熱タイマーON(1000ms)
+;### End: ST8加熱タイマーON && ST8コア在籍
+;- Step1_Start && not(Step1_End) -> ST8ワーククランプ_BACKWARD
+;- Step2_Start && not(Step3_End) -> CIN8_PERMIT
+;- Step3_Start && not(Step3_End) -> CIN8_LOAD_COMPLETE
+;- Step5_Start && not(Step5_End) -> ST8ワーククランプ_FORWARD
+;- Step6_Start && not(Step7_End) -> ST8加熱
+;- Step6_Start && not(Step7_End) -TIMER-> ST8加熱タイマー
+;- COUT6_1_LOADING -> CIN8_LOADING
+;- CIN8_PERMIT -> COUT6_1_PERMIT
+;- CIN8_LOAD_COMPLETE -> COUT6_1_LOAD_COMPLETE
+;
+
+;*** Output29 ***
+; ST8: 加熱1; C1: 投入RBから搬入・加熱
+LD AutoRun
+ANDI XXX60 ; ST8コア在籍
+LD ST8_C1_Start
+ORB
+AND Ready
+ANI ST8_C1_End
+OUT ST8_C1_Start
+
+LD ST8_C1_Start
+AND AlwaysOn
+LD ST8_C1_Step1_Start
+ORB
+AND ST8_C1_Start
+OUT ST8_C1_Step1_Start
+
+LD ST8_C1_Step1_End
+AND AlwaysOn
+LD ST8_C1_Step2_Start
+ORB
+AND ST8_C1_Start
+OUT ST8_C1_Step2_Start
+
+LD ST8_C1_Step2_End
+AND AlwaysOn
+LD ST8_C1_Step3_Start
+ORB
+AND ST8_C1_Start
+OUT ST8_C1_Step3_Start
+
+LD ST8_C1_Step3_End
+AND AlwaysOn
+LD ST8_C1_Step4_Start
+ORB
+AND ST8_C1_Start
+OUT ST8_C1_Step4_Start
+
+LD ST8_C1_Step4_End
+AND AlwaysOn
+LD ST8_C1_Step5_Start
+ORB
+AND ST8_C1_Start
+OUT ST8_C1_Step5_Start
+
+LD ST8_C1_Step5_End
+AND AlwaysOn
+LD ST8_C1_Step6_Start
+ORB
+AND ST8_C1_Start
+OUT ST8_C1_Step6_Start
+
+LD ST8_C1_Step6_End
+AND AlwaysOn
+LD ST8_C1_Step7_Start
+ORB
+AND ST8_C1_Start
+OUT ST8_C1_Step7_Start
+
+LD ST8_C1_Step1_Start
+AND XXX58 ; ST8ワーククランプ_BACKWARD_LS
+LD ST8_C1_Step1_End
+ORB
+AND ST8_C1_Start
+OUT ST8_C1_Step1_End
+
+LD ST8_C1_Step2_Start
+AND CIN8_LOADING
+LD ST8_C1_Step2_End
+ORB
+AND ST8_C1_Start
+OUT ST8_C1_Step2_End
+
+LD ST8_C1_Step3_Start
+AND XXX60 ; ST8コア在籍
+LD ST8_C1_Step3_End
+ORB
+AND ST8_C1_Start
+OUT ST8_C1_Step3_End
+
+LD ST8_C1_Step4_Start
+ANDI CIN8_LOADING
+LD ST8_C1_Step4_End
+ORB
+AND ST8_C1_Start
+OUT ST8_C1_Step4_End
+
+LD ST8_C1_Step5_Start
+AND XXX61 ; ST8ワーククランプ_FORWARD_LS
+LD ST8_C1_Step5_End
+ORB
+AND ST8_C1_Start
+OUT ST8_C1_Step5_End
+
+LD ST8_C1_Step6_Start
+AND XXX62 ; ST8加熱ON
+LD ST8_C1_Step6_End
+ORB
+AND ST8_C1_Start
+OUT ST8_C1_Step6_End
+
+LD ST8_C1_Step7_Start
+AND T8 ; ST8加熱タイマーON(1000ms)
+LD ST8_C1_Step7_End
+ORB
+AND ST8_C1_Start
+OUT ST8_C1_Step7_End
+
+LD ST8_C1_Step7_End
+AND XXX63 ; ST8加熱タイマーON
+AND XXX60 ; ST8コア在籍
+LD ST8_C1_End
+ORB
+AND ST8_C1_Start
+OUT ST8_C1_End
+
+LD ST8_C1_Step2_Start
+ANDI ST8_C1_Step3_End
+OUT CIN8_PERMIT
+
+LD ST8_C1_Step3_Start
+ANDI ST8_C1_Step3_End
+OUT CIN8_LOAD_COMPLETE
+
+LD ST8_C1_Step5_Start
+ANDI ST8_C1_Step5_End
+OUT XXX64 ; ST8ワーククランプ_FORWARD
+
+LD ST8_C1_Step6_Start
+ANDI ST8_C1_Step7_End
+OUT XXX65 ; ST8加熱
+
+LD ST8_C1_Step6_Start
+ANDI ST8_C1_Step7_End
+TON T8 ; ST8加熱タイマー
+
+LD COUT6_1_LOADING
+OUT CIN8_LOADING
+
+LD CIN8_PERMIT
+OUT COUT6_1_PERMIT
+
+LD CIN8_LOAD_COMPLETE
+OUT COUT6_1_LOAD_COMPLETE
+
+
+
+;*** Input30 ***
+;# ST8: 加熱1
+;## C2: 返却RBへ搬出
+;### Start: AutoRun && ST8_C1_End
+;- Step1_End: ST8ワーククランプ_BACKWARD_LS
+;- Step2_End: COUT8_PERMIT
+;- Step3_End: not(ST8コア在籍)
+;- Step4_End: COUT8_LOAD_COMPLETE
+;### End: not(ST8コア在籍)
+;- Step1_Start && not(Step1_End) -> ST8ワーククランプ_BACKWARD
+;- Step2_Start && not(Step4_End) -> COUT8_LOADING
+;
+;
+
+;*** Output30 ***
+; ST8: 加熱1; C2: 返却RBへ搬出
+LD AutoRun
+AND ST8_C1_End
+LD ST8_C2_Start
+ORB
+AND Ready
+ANI ST8_C2_End
+OUT ST8_C2_Start
+
+LD ST8_C2_Start
+AND AlwaysOn
+LD ST8_C2_Step1_Start
+ORB
+AND ST8_C2_Start
+OUT ST8_C2_Step1_Start
+
+LD ST8_C2_Step1_End
+AND AlwaysOn
+LD ST8_C2_Step2_Start
+ORB
+AND ST8_C2_Start
+OUT ST8_C2_Step2_Start
+
+LD ST8_C2_Step2_End
+AND AlwaysOn
+LD ST8_C2_Step3_Start
+ORB
+AND ST8_C2_Start
+OUT ST8_C2_Step3_Start
+
+LD ST8_C2_Step3_End
+AND AlwaysOn
+LD ST8_C2_Step4_Start
+ORB
+AND ST8_C2_Start
+OUT ST8_C2_Step4_Start
+
+LD ST8_C2_Step1_Start
+AND XXX58 ; ST8ワーククランプ_BACKWARD_LS
+LD ST8_C2_Step1_End
+ORB
+AND ST8_C2_Start
+OUT ST8_C2_Step1_End
+
+LD ST8_C2_Step2_Start
+AND COUT8_PERMIT
+LD ST8_C2_Step2_End
+ORB
+AND ST8_C2_Start
+OUT ST8_C2_Step2_End
+
+LD ST8_C2_Step3_Start
+ANDI XXX60 ; ST8コア在籍
+LD ST8_C2_Step3_End
+ORB
+AND ST8_C2_Start
+OUT ST8_C2_Step3_End
+
+LD ST8_C2_Step4_Start
+AND COUT8_LOAD_COMPLETE
+LD ST8_C2_Step4_End
+ORB
+AND ST8_C2_Start
+OUT ST8_C2_Step4_End
+
+LD ST8_C2_Step4_End
+ANDI XXX60 ; ST8コア在籍
+LD ST8_C2_End
+ORB
+AND ST8_C2_Start
+OUT ST8_C2_End
+
+LD ST8_C2_Step2_Start
+ANDI ST8_C2_Step4_End
+OUT COUT8_LOADING
+
+
+
+;*** Input31 ***
+;# ST9: 加熱2
+;## C0: 原位置復帰
+;### Start: ManualMode && HomePB
+;- Step1_End: ST9ワーククランプ_BACKWARD_LS
+;### End: ST9ワーククランプ_BACKWARD_LS
+;- Step1_Start && not(Step1_End) -> ST9ワーククランプ_BACKWARD
+;
+
+;*** Output31 ***
+; ST9: 加熱2; C0: 原位置復帰
+LD ManualMode
+AND HomePB
+LD ST9_C0_Start
+ORB
+AND Ready
+ANI ST9_C0_End
+OUT ST9_C0_Start
+
+LD ST9_C0_Start
+AND AlwaysOn
+LD ST9_C0_Step1_Start
+ORB
+AND ST9_C0_Start
+OUT ST9_C0_Step1_Start
+
+LD ST9_C0_Step1_Start
+AND XXX66 ; ST9ワーククランプ_BACKWARD_LS
+LD ST9_C0_Step1_End
+ORB
+AND ST9_C0_Start
+OUT ST9_C0_Step1_End
+
+LD ST9_C0_Step1_End
+AND XXX66 ; ST9ワーククランプ_BACKWARD_LS
+LD ST9_C0_End
+ORB
+AND ST9_C0_Start
+OUT ST9_C0_End
+
+LD ST9_C0_Step1_Start
+ANDI ST9_C0_Step1_End
+LD ST9_C1_Step1_Start
+ANDI ST9_C1_Step1_End
+LD ST9_C2_Step1_Start
+ANDI ST9_C2_Step1_End
+ORB
+ORB
+OUT XXX67 ; ST9ワーククランプ_BACKWARD
+
+
+
+;*** Input32 ***
+;# ST9: 加熱2
+;## C1: 投入RBから搬入・加熱
+;### Start: AutoRun && not(ST9コア在籍)
+;- Step1_End: ST9ワーククランプ_BACKWARD_LS
+;- Step2_End: CIN9_LOADING
+;- Step3_End: ST9コア在籍
+;- Step4_End: not(CIN9_LOADING)
+;- Step5_End: ST9ワーククランプ_FORWARD_LS
+;- Step6_End: ST9加熱ON
+;- Step7_End: ST9加熱タイマーON(1000ms)
+;### End: ST9加熱タイマーON && ST9コア在籍
+;- Step1_Start && not(Step1_End) -> ST9ワーククランプ_BACKWARD
+;- Step2_Start && not(Step3_End) -> CIN9_PERMIT
+;- Step3_Start && not(Step3_End) -> CIN9_LOAD_COMPLETE
+;- Step5_Start && not(Step5_End) -> ST9ワーククランプ_FORWARD
+;- Step6_Start && not(Step7_End) -> ST9加熱
+;- Step6_Start && not(Step7_End) -TIMER-> ST9加熱タイマー
+;- COUT6_2_LOADING -> CIN9_LOADING
+;- CIN9_PERMIT -> COUT6_2_PERMIT
+;- CIN9_LOAD_COMPLETE -> COUT6_2_LOAD_COMPLETE
+;
+
+;*** Output32 ***
+; ST9: 加熱2; C1: 投入RBから搬入・加熱
+LD AutoRun
+ANDI XXX68 ; ST9コア在籍
+LD ST9_C1_Start
+ORB
+AND Ready
+ANI ST9_C1_End
+OUT ST9_C1_Start
+
+LD ST9_C1_Start
+AND AlwaysOn
+LD ST9_C1_Step1_Start
+ORB
+AND ST9_C1_Start
+OUT ST9_C1_Step1_Start
+
+LD ST9_C1_Step1_End
+AND AlwaysOn
+LD ST9_C1_Step2_Start
+ORB
+AND ST9_C1_Start
+OUT ST9_C1_Step2_Start
+
+LD ST9_C1_Step2_End
+AND AlwaysOn
+LD ST9_C1_Step3_Start
+ORB
+AND ST9_C1_Start
+OUT ST9_C1_Step3_Start
+
+LD ST9_C1_Step3_End
+AND AlwaysOn
+LD ST9_C1_Step4_Start
+ORB
+AND ST9_C1_Start
+OUT ST9_C1_Step4_Start
+
+LD ST9_C1_Step4_End
+AND AlwaysOn
+LD ST9_C1_Step5_Start
+ORB
+AND ST9_C1_Start
+OUT ST9_C1_Step5_Start
+
+LD ST9_C1_Step5_End
+AND AlwaysOn
+LD ST9_C1_Step6_Start
+ORB
+AND ST9_C1_Start
+OUT ST9_C1_Step6_Start
+
+LD ST9_C1_Step6_End
+AND AlwaysOn
+LD ST9_C1_Step7_Start
+ORB
+AND ST9_C1_Start
+OUT ST9_C1_Step7_Start
+
+LD ST9_C1_Step1_Start
+AND XXX66 ; ST9ワーククランプ_BACKWARD_LS
+LD ST9_C1_Step1_End
+ORB
+AND ST9_C1_Start
+OUT ST9_C1_Step1_End
+
+LD ST9_C1_Step2_Start
+AND CIN9_LOADING
+LD ST9_C1_Step2_End
+ORB
+AND ST9_C1_Start
+OUT ST9_C1_Step2_End
+
+LD ST9_C1_Step3_Start
+AND XXX68 ; ST9コア在籍
+LD ST9_C1_Step3_End
+ORB
+AND ST9_C1_Start
+OUT ST9_C1_Step3_End
+
+LD ST9_C1_Step4_Start
+ANDI CIN9_LOADING
+LD ST9_C1_Step4_End
+ORB
+AND ST9_C1_Start
+OUT ST9_C1_Step4_End
+
+LD ST9_C1_Step5_Start
+AND XXX69 ; ST9ワーククランプ_FORWARD_LS
+LD ST9_C1_Step5_End
+ORB
+AND ST9_C1_Start
+OUT ST9_C1_Step5_End
+
+LD ST9_C1_Step6_Start
+AND XXX70 ; ST9加熱ON
+LD ST9_C1_Step6_End
+ORB
+AND ST9_C1_Start
+OUT ST9_C1_Step6_End
+
+LD ST9_C1_Step7_Start
+AND XXX71 ; ST9加熱タイマーON(1000ms)
+LD ST9_C1_Step7_End
+ORB
+AND ST9_C1_Start
+OUT ST9_C1_Step7_End
+
+LD ST9_C1_Step7_End
+AND XXX72 ; ST9加熱タイマーON
+AND XXX68 ; ST9コア在籍
+LD ST9_C1_End
+ORB
+AND ST9_C1_Start
+OUT ST9_C1_End
+
+LD ST9_C1_Step2_Start
+ANDI ST9_C1_Step3_End
+OUT CIN9_PERMIT
+
+LD ST9_C1_Step3_Start
+ANDI ST9_C1_Step3_End
+OUT CIN9_LOAD_COMPLETE
+
+LD ST9_C1_Step5_Start
+ANDI ST9_C1_Step5_End
+OUT XXX73 ; ST9ワーククランプ_FORWARD
+
+LD ST9_C1_Step6_Start
+ANDI ST9_C1_Step7_End
+OUT XXX74 ; ST9加熱
+
+LD ST9_C1_Step6_Start
+ANDI ST9_C1_Step7_End
+TON XXX75 ; ST9加熱タイマー
+
+LD COUT6_2_LOADING
+OUT CIN9_LOADING
+
+LD CIN9_PERMIT
+OUT COUT6_2_PERMIT
+
+LD CIN9_LOAD_COMPLETE
+OUT COUT6_2_LOAD_COMPLETE
+
+
+
+;*** Input33 ***
+;# ST9: 加熱2
+;## C2: 返却RBへ搬出
+;### Start: AutoRun && ST9_C1_End
+;- Step1_End: ST9ワーククランプ_BACKWARD_LS
+;- Step2_End: COUT9_PERMIT
+;- Step3_End: not(ST9コア在籍)
+;- Step4_End: COUT9_LOAD_COMPLETE
+;### End: not(ST9コア在籍)
+;- Step1_Start && not(Step1_End) -> ST9ワーククランプ_BACKWARD
+;- Step2_Start && not(Step4_End) -> COUT9_LOADING
+;
+;
+
+;*** Output33 ***
+; ST9: 加熱2; C2: 返却RBへ搬出
+LD AutoRun
+AND ST9_C1_End
+LD ST9_C2_Start
+ORB
+AND Ready
+ANI ST9_C2_End
+OUT ST9_C2_Start
+
+LD ST9_C2_Start
+AND AlwaysOn
+LD ST9_C2_Step1_Start
+ORB
+AND ST9_C2_Start
+OUT ST9_C2_Step1_Start
+
+LD ST9_C2_Step1_End
+AND AlwaysOn
+LD ST9_C2_Step2_Start
+ORB
+AND ST9_C2_Start
+OUT ST9_C2_Step2_Start
+
+LD ST9_C2_Step2_End
+AND AlwaysOn
+LD ST9_C2_Step3_Start
+ORB
+AND ST9_C2_Start
+OUT ST9_C2_Step3_Start
+
+LD ST9_C2_Step3_End
+AND AlwaysOn
+LD ST9_C2_Step4_Start
+ORB
+AND ST9_C2_Start
+OUT ST9_C2_Step4_Start
+
+LD ST9_C2_Step1_Start
+AND XXX66 ; ST9ワーククランプ_BACKWARD_LS
+LD ST9_C2_Step1_End
+ORB
+AND ST9_C2_Start
+OUT ST9_C2_Step1_End
+
+LD ST9_C2_Step2_Start
+AND COUT9_PERMIT
+LD ST9_C2_Step2_End
+ORB
+AND ST9_C2_Start
+OUT ST9_C2_Step2_End
+
+LD ST9_C2_Step3_Start
+ANDI XXX68 ; ST9コア在籍
+LD ST9_C2_Step3_End
+ORB
+AND ST9_C2_Start
+OUT ST9_C2_Step3_End
+
+LD ST9_C2_Step4_Start
+AND COUT9_LOAD_COMPLETE
+LD ST9_C2_Step4_End
+ORB
+AND ST9_C2_Start
+OUT ST9_C2_Step4_End
+
+LD ST9_C2_Step4_End
+ANDI XXX68 ; ST9コア在籍
+LD ST9_C2_End
+ORB
+AND ST9_C2_Start
+OUT ST9_C2_End
+
+LD ST9_C2_Step2_Start
+ANDI ST9_C2_Step4_End
+OUT COUT9_LOADING
+
+
+
+;*** Input34 ***
+;# ST10: 加熱3
+;## C0: 原位置復帰
+;### Start: ManualMode && HomePB
+;- Step1_End: ST10ワーククランプ_BACKWARD_LS
+;### End: ST10ワーククランプ_BACKWARD_LS
+;- Step1_Start && not(Step1_End) -> ST10ワーククランプ_BACKWARD
+;
+
+;*** Output34 ***
+; ST10: 加熱3; C0: 原位置復帰
+LD ManualMode
+AND HomePB
+LD ST10_C0_Start
+ORB
+AND Ready
+ANI ST10_C0_End
+OUT ST10_C0_Start
+
+LD ST10_C0_Start
+AND AlwaysOn
+LD ST10_C0_Step1_Start
+ORB
+AND ST10_C0_Start
+OUT ST10_C0_Step1_Start
+
+LD ST10_C0_Step1_Start
+AND XXX76 ; ST10ワーククランプ_BACKWARD_LS
+LD ST10_C0_Step1_End
+ORB
+AND ST10_C0_Start
+OUT ST10_C0_Step1_End
+
+LD ST10_C0_Step1_End
+AND XXX76 ; ST10ワーククランプ_BACKWARD_LS
+LD ST10_C0_End
+ORB
+AND ST10_C0_Start
+OUT ST10_C0_End
+
+LD ST10_C0_Step1_Start
+ANDI ST10_C0_Step1_End
+LD ST10_C1_Step1_Start
+ANDI ST10_C1_Step1_End
+LD ST10_C2_Step1_Start
+ANDI ST10_C2_Step1_End
+ORB
+ORB
+OUT XXX77 ; ST10ワーククランプ_BACKWARD
+
+
+
+;*** Input35 ***
+;# ST10: 加熱3
+;## C1: 投入RBから搬入・加熱
+;### Start: AutoRun && not(ST10コア在籍)
+;- Step1_End: ST10ワーククランプ_BACKWARD_LS
+;- Step2_End: CIN10_LOADING
+;- Step3_End: ST10コア在籍
+;- Step4_End: not(CIN10_LOADING)
+;- Step5_End: ST10ワーククランプ_FORWARD_LS
+;- Step6_End: ST10加熱ON
+;- Step7_End: ST10加熱タイマーON(1000ms)
+;### End: ST10加熱タイマーON && ST10コア在籍
+;- Step1_Start && not(Step1_End) -> ST10ワーククランプ_BACKWARD
+;- Step2_Start && not(Step3_End) -> CIN10_PERMIT
+;- Step3_Start && not(Step3_End) -> CIN10_LOAD_COMPLETE
+;- Step5_Start && not(Step5_End) -> ST10ワーククランプ_FORWARD
+;- Step6_Start && not(Step7_End) -> ST10加熱
+;- Step6_Start && not(Step7_End) -TIMER-> ST10加熱タイマー
+;- COUT6_3_LOADING -> CIN10_LOADING
+;- CIN10_PERMIT -> COUT6_3_PERMIT
+;- CIN10_LOAD_COMPLETE -> COUT6_3_LOAD_COMPLETE
+;
+
+;*** Output35 ***
+; ST10: 加熱3; C1: 投入RBから搬入・加熱
+LD AutoRun
+ANDI XXX78 ; ST10コア在籍
+LD ST10_C1_Start
+ORB
+AND Ready
+ANI ST10_C1_End
+OUT ST10_C1_Start
+
+LD ST10_C1_Start
+AND AlwaysOn
+LD ST10_C1_Step1_Start
+ORB
+AND ST10_C1_Start
+OUT ST10_C1_Step1_Start
+
+LD ST10_C1_Step1_End
+AND AlwaysOn
+LD ST10_C1_Step2_Start
+ORB
+AND ST10_C1_Start
+OUT ST10_C1_Step2_Start
+
+LD ST10_C1_Step2_End
+AND AlwaysOn
+LD ST10_C1_Step3_Start
+ORB
+AND ST10_C1_Start
+OUT ST10_C1_Step3_Start
+
+LD ST10_C1_Step3_End
+AND AlwaysOn
+LD ST10_C1_Step4_Start
+ORB
+AND ST10_C1_Start
+OUT ST10_C1_Step4_Start
+
+LD ST10_C1_Step4_End
+AND AlwaysOn
+LD ST10_C1_Step5_Start
+ORB
+AND ST10_C1_Start
+OUT ST10_C1_Step5_Start
+
+LD ST10_C1_Step5_End
+AND AlwaysOn
+LD ST10_C1_Step6_Start
+ORB
+AND ST10_C1_Start
+OUT ST10_C1_Step6_Start
+
+LD ST10_C1_Step6_End
+AND AlwaysOn
+LD ST10_C1_Step7_Start
+ORB
+AND ST10_C1_Start
+OUT ST10_C1_Step7_Start
+
+LD ST10_C1_Step1_Start
+AND XXX76 ; ST10ワーククランプ_BACKWARD_LS
+LD ST10_C1_Step1_End
+ORB
+AND ST10_C1_Start
+OUT ST10_C1_Step1_End
+
+LD ST10_C1_Step2_Start
+AND CIN10_LOADING
+LD ST10_C1_Step2_End
+ORB
+AND ST10_C1_Start
+OUT ST10_C1_Step2_End
+
+LD ST10_C1_Step3_Start
+AND XXX78 ; ST10コア在籍
+LD ST10_C1_Step3_End
+ORB
+AND ST10_C1_Start
+OUT ST10_C1_Step3_End
+
+LD ST10_C1_Step4_Start
+ANDI CIN10_LOADING
+LD ST10_C1_Step4_End
+ORB
+AND ST10_C1_Start
+OUT ST10_C1_Step4_End
+
+LD ST10_C1_Step5_Start
+AND XXX79 ; ST10ワーククランプ_FORWARD_LS
+LD ST10_C1_Step5_End
+ORB
+AND ST10_C1_Start
+OUT ST10_C1_Step5_End
+
+LD ST10_C1_Step6_Start
+AND XXX80 ; ST10加熱ON
+LD ST10_C1_Step6_End
+ORB
+AND ST10_C1_Start
+OUT ST10_C1_Step6_End
+
+LD ST10_C1_Step7_Start
+AND XXX81 ; ST10加熱タイマーON(1000ms)
+LD ST10_C1_Step7_End
+ORB
+AND ST10_C1_Start
+OUT ST10_C1_Step7_End
+
+LD ST10_C1_Step7_End
+AND XXX82 ; ST10加熱タイマーON
+AND XXX78 ; ST10コア在籍
+LD ST10_C1_End
+ORB
+AND ST10_C1_Start
+OUT ST10_C1_End
+
+LD ST10_C1_Step2_Start
+ANDI ST10_C1_Step3_End
+OUT CIN10_PERMIT
+
+LD ST10_C1_Step3_Start
+ANDI ST10_C1_Step3_End
+OUT CIN10_LOAD_COMPLETE
+
+LD ST10_C1_Step5_Start
+ANDI ST10_C1_Step5_End
+OUT XXX83 ; ST10ワーククランプ_FORWARD
+
+LD ST10_C1_Step6_Start
+ANDI ST10_C1_Step7_End
+OUT XXX84 ; ST10加熱
+
+LD ST10_C1_Step6_Start
+ANDI ST10_C1_Step7_End
+TON XXX85 ; ST10加熱タイマー
+
+LD COUT6_3_LOADING
+OUT CIN10_LOADING
+
+LD CIN10_PERMIT
+OUT COUT6_3_PERMIT
+
+LD CIN10_LOAD_COMPLETE
+OUT COUT6_3_LOAD_COMPLETE
+
+
+
+;*** Input36 ***
+;# ST10: 加熱3
+;## C2: 返却RBへ搬出
+;### Start: AutoRun && ST10_C1_End
+;- Step1_End: ST10ワーククランプ_BACKWARD_LS
+;- Step2_End: COUT10_PERMIT
+;- Step3_End: not(ST10コア在籍)
+;- Step4_End: COUT10_LOAD_COMPLETE
+;### End: not(ST10コア在籍)
+;- Step1_Start && not(Step1_End) -> ST10ワーククランプ_BACKWARD
+;- Step2_Start && not(Step4_End) -> COUT10_LOADING
+;
+;
+
+;*** Output36 ***
+; ST10: 加熱3; C2: 返却RBへ搬出
+LD AutoRun
+AND ST10_C1_End
+LD ST10_C2_Start
+ORB
+AND Ready
+ANI ST10_C2_End
+OUT ST10_C2_Start
+
+LD ST10_C2_Start
+AND AlwaysOn
+LD ST10_C2_Step1_Start
+ORB
+AND ST10_C2_Start
+OUT ST10_C2_Step1_Start
+
+LD ST10_C2_Step1_End
+AND AlwaysOn
+LD ST10_C2_Step2_Start
+ORB
+AND ST10_C2_Start
+OUT ST10_C2_Step2_Start
+
+LD ST10_C2_Step2_End
+AND AlwaysOn
+LD ST10_C2_Step3_Start
+ORB
+AND ST10_C2_Start
+OUT ST10_C2_Step3_Start
+
+LD ST10_C2_Step3_End
+AND AlwaysOn
+LD ST10_C2_Step4_Start
+ORB
+AND ST10_C2_Start
+OUT ST10_C2_Step4_Start
+
+LD ST10_C2_Step1_Start
+AND XXX76 ; ST10ワーククランプ_BACKWARD_LS
+LD ST10_C2_Step1_End
+ORB
+AND ST10_C2_Start
+OUT ST10_C2_Step1_End
+
+LD ST10_C2_Step2_Start
+AND COUT10_PERMIT
+LD ST10_C2_Step2_End
+ORB
+AND ST10_C2_Start
+OUT ST10_C2_Step2_End
+
+LD ST10_C2_Step3_Start
+ANDI XXX78 ; ST10コア在籍
+LD ST10_C2_Step3_End
+ORB
+AND ST10_C2_Start
+OUT ST10_C2_Step3_End
+
+LD ST10_C2_Step4_Start
+AND COUT10_LOAD_COMPLETE
+LD ST10_C2_Step4_End
+ORB
+AND ST10_C2_Start
+OUT ST10_C2_Step4_End
+
+LD ST10_C2_Step4_End
+ANDI XXX78 ; ST10コア在籍
+LD ST10_C2_End
+ORB
+AND ST10_C2_Start
+OUT ST10_C2_End
+
+LD ST10_C2_Step2_Start
+ANDI ST10_C2_Step4_End
+OUT COUT10_LOADING
+
+
+
+;*** Input37 ***
+;- 記憶"ME5_HasOkWork"
+;- CIN2_2_LOAD_COMPLETE && ME3_HasOkWork -SET-> ME5_HasOkWork
+;- fall(COUT2_LOAD_COMPLETE) -RESET-> ME5_HasOkWork
+
+;*** Output37 ***
+LD CIN2_2_LOAD_COMPLETE
+AND ME3_HasOkWork
+LD ME5_HasOkWork
+ORB
+ANFI COUT2_LOAD_COMPLETE
+OUT ME5_HasOkWork ; 記憶"ME5_HasOkWork"
+
+
+
+;*** Input38 ***
+;- 記憶"ME6_HasNgWork"
+;- CIN2_2_LOAD_COMPLETE && ME4_HasNgWork -SET-> ME6_HasNgWork
+;- fall(COUT2_LOAD_COMPLETE) -RESET-> ME6_HasNgWork
+
+;*** Output38 ***
+LD CIN2_2_LOAD_COMPLETE
+AND ME4_HasNgWork
+LD ME6_HasNgWork
+ORB
+ANFI COUT2_LOAD_COMPLETE
+OUT ME6_HasNgWork ; 記憶"ME6_HasNgWork"
+
+
+
+;*** Input39 ***
+;- 記憶"ME7_HasOkWork"
+;- CIN3_LOAD_COMPLETE && ME5_HasOkWork -SET-> ME7_HasOkWork
+;- fall(COUT3_1_LOAD_COMPLETE) -RESET-> ME7_HasOkWork
+
+;*** Output39 ***
+LD CIN3_LOAD_COMPLETE
+AND ME5_HasOkWork
+LD ME7_HasOkWork
+ORB
+ANFI COUT3_1_LOAD_COMPLETE
+OUT ME7_HasOkWork ; 記憶"ME7_HasOkWork"
+
+
+
+;*** Input40 ***
+;- 記憶"ME8_HasNgWork"
+;- CIN3_LOAD_COMPLETE && ME6_HasNgWork -SET-> ME8_HasNgWork
+;- fall(COUT3_2_LOAD_COMPLETE) -RESET-> ME8_HasNgWork
+
+;*** Output40 ***
+LD CIN3_LOAD_COMPLETE
+AND ME6_HasNgWork
+LD ME8_HasNgWork
+ORB
+ANFI COUT3_2_LOAD_COMPLETE
+OUT ME8_HasNgWork ; 記憶"ME8_HasNgWork"
+
+
+
+;*** Input41 ***
+;- 記憶"ME1_HasWork"
+;- CIN6_LOAD_COMPLETE -SET-> ME1_HasWork
+;- fall(COUT6_1_LOAD_COMPLETE) -RESET-> ME1_HasWork
+;- fall(COUT6_2_LOAD_COMPLETE) -RESET-> ME1_HasWork
+;- fall(COUT6_3_LOAD_COMPLETE) -RESET-> ME1_HasWork
+
+;*** Output41 ***
+LD CIN6_LOAD_COMPLETE
+LD ME1_HasWork
+ORB
+ANFI COUT6_1_LOAD_COMPLETE
+ANFI COUT6_2_LOAD_COMPLETE
+ANFI COUT6_3_LOAD_COMPLETE
+OUT ME1_HasWork ; 記憶"ME1_HasWork"
+
+
+
+;*** Input42 ***
+;- 記憶"ME3_HasOkWork"
+;- CIN7_1_LOAD_COMPLETE && 加熱1正常 -SET-> ME3_HasOkWork
+;- CIN7_2_LOAD_COMPLETE && 加熱2正常 -SET-> ME3_HasOkWork
+;- CIN7_3_LOAD_COMPLETE && 加熱3正常 -SET-> ME3_HasOkWork
+;- fall(COUT7_LOAD_COMPLETE) -RESET-> ME3_HasOkWork
+
+;*** Output42 ***
+LD CIN7_1_LOAD_COMPLETE
+AND XXX55 ; 加熱1正常
+LD CIN7_2_LOAD_COMPLETE
+AND XXX56 ; 加熱2正常
+ORB
+LD CIN7_3_LOAD_COMPLETE
+AND XXX57 ; 加熱3正常
+ORB
+LD ME3_HasOkWork
+ORB
+ANFI COUT7_LOAD_COMPLETE
+OUT ME3_HasOkWork ; 記憶"ME3_HasOkWork"
+
+
+
+;*** Input43 ***
+;- 記憶"ME4_HasNgWork"
+;- CIN7_1_LOAD_COMPLETE && not(加熱1正常) -SET-> ME4_HasNgWork
+;- CIN7_2_LOAD_COMPLETE && not(加熱2正常) -SET-> ME4_HasNgWork
+;- CIN7_3_LOAD_COMPLETE && not(加熱3正常) -SET-> ME4_HasNgWork
+;- fall(COUT7_LOAD_COMPLETE) -RESET-> ME4_HasNgWork
+
+;*** Output43 ***
+LD CIN7_1_LOAD_COMPLETE
+ANDI XXX55 ; 加熱1正常
+LD CIN7_2_LOAD_COMPLETE
+ANDI XXX56 ; 加熱2正常
+ORB
+LD CIN7_3_LOAD_COMPLETE
+ANDI XXX57 ; 加熱3正常
+ORB
+LD ME4_HasNgWork
+ORB
+ANFI COUT7_LOAD_COMPLETE
+OUT ME4_HasNgWork ; 記憶"ME4_HasNgWork"

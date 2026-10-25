@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="ladder-signature" content="__SOURCE_SIGNATURE__">
+  <title>ラダー図ビューア</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172b45;
+      --muted: #5d6d80;
+      --line: #b8c5d2;
+      --accent: #1769aa;
+      --paper: #fff;
+      --panel: #f3f6f9;
+      --warning: #8a4b00;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #e9eef3;
+      font: 14px/1.45 "Segoe UI", "Yu Gothic UI", Meiryo, sans-serif;
+    }
+    header {
+      height: 54px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 0 20px;
+      color: #fff;
+      background: #17395d;
+      box-shadow: 0 2px 5px #182f4933;
+    }
+    header strong { font-size: 16px; letter-spacing: .03em; }
+    header .source { color: #d9e6f4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    header .spacer { flex: 1; }
+    #connection { color: #cbe7d1; white-space: nowrap; }
+    #connection.error { color: #ffd2cb; }
+    .layout {
+      display: grid;
+      grid-template-columns: 270px minmax(0, 1fr);
+      min-height: calc(100vh - 54px);
+    }
+    aside {
+      overflow: auto;
+      padding: 14px 10px;
+      background: #f5f7fa;
+      border-right: 1px solid #c8d2dc;
+    }
+    .search-wrap { position: sticky; top: -14px; z-index: 2; padding: 4px 2px 12px; background: #f5f7fa; }
+    #search {
+      width: 100%;
+      padding: 9px 10px;
+      border: 1px solid #b6c3d0;
+      border-radius: 4px;
+      color: var(--ink);
+      background: #fff;
+      font: inherit;
+    }
+    .nav-group { margin: 10px 0 14px; }
+    .nav-group h2 {
+      margin: 0 7px 5px;
+      color: #51657c;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .section-button {
+      display: block;
+      width: 100%;
+      margin: 2px 0;
+      padding: 7px 9px;
+      overflow: hidden;
+      border: 0;
+      border-left: 3px solid transparent;
+      border-radius: 3px;
+      color: #233b56;
+      background: transparent;
+      text-align: left;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+    }
+    .section-button:hover { background: #e7edf3; }
+    .section-button.active { border-left-color: var(--accent); color: #104b7c; background: #dceaf6; font-weight: 700; }
+    main { min-width: 0; padding: 22px; }
+    .toolbar {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+    .toolbar h1 { margin: 0; font-size: 21px; font-weight: 650; }
+    .toolbar .counts { color: var(--muted); font-size: 12px; }
+    #reload-warning {
+      display: none;
+      margin: 0 0 14px;
+      padding: 10px 12px;
+      border: 1px solid #e1a19a;
+      border-radius: 4px;
+      color: #74271e;
+      background: #fff1ef;
+      white-space: pre-wrap;
+    }
+    #parse-warnings {
+      display: none;
+      margin: 0 0 14px;
+      padding: 10px 12px;
+      border: 1px solid #dfc18d;
+      border-radius: 4px;
+      color: var(--warning);
+      background: #fff8e9;
+    }
+    #model-warning {
+      display: none;
+      margin: 0 0 14px;
+      padding: 10px 12px;
+      border: 1px solid #dfc18d;
+      border-radius: 4px;
+      color: var(--warning);
+      background: #fff8e9;
+    }
+    #parse-warnings ul { margin: 6px 0 0; padding-left: 20px; }
+    .rung-list { display: grid; gap: 10px; }
+    .rung {
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid #c4ced8;
+      border-radius: 4px;
+      background: var(--paper);
+      box-shadow: 0 1px 2px #1a34450d;
+    }
+    .rung-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 29px;
+      padding: 4px 10px;
+      border-bottom: 1px solid #e1e7ed;
+      color: #50647a;
+      background: #f8fafc;
+      font-size: 11px;
+    }
+    .rung-head .index { min-width: 28px; color: #75869a; font-variant-numeric: tabular-nums; }
+    .rung-head .tag { font-family: Consolas, "Courier New", monospace; }
+    .rung-scroll { overflow-x: auto; }
+    .ladder-svg { display: block; min-width: 580px; background: #fff; }
+    .wire { stroke: #334b63; stroke-width: 2; fill: none; vector-effect: non-scaling-stroke; }
+    .contact-bar { stroke: #183b5b; stroke-width: 2.3; vector-effect: non-scaling-stroke; }
+    .contact-slash { stroke: #183b5b; stroke-width: 1.7; vector-effect: non-scaling-stroke; }
+    .contact-label { fill: #142d48; font: 12px Consolas, "Yu Gothic UI", sans-serif; text-anchor: middle; }
+    .contact-note { fill: #65768a; font: 10px "Yu Gothic UI", Meiryo, sans-serif; text-anchor: middle; }
+    .coil { stroke: #183b5b; stroke-width: 2.2; fill: none; vector-effect: non-scaling-stroke; }
+    .block { fill: #edf4fb; stroke: #56728e; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+    .block-title { fill: #183b5b; font: 700 12px Consolas, sans-serif; text-anchor: middle; }
+    .block-detail { fill: #425d78; font: 11px Consolas, sans-serif; text-anchor: middle; }
+    .source-details { border-top: 1px solid #e1e7ed; color: #42556c; background: #f8fafc; }
+    .source-details summary { padding: 5px 10px; cursor: pointer; font-size: 11px; }
+    .source-details pre { margin: 0; padding: 0 10px 10px; overflow-x: auto; font: 11px/1.5 Consolas, "Yu Gothic UI", monospace; }
+    .empty { padding: 30px; border: 1px dashed #bbc8d5; border-radius: 4px; color: var(--muted); background: #fff; }
+    @media (max-width: 760px) {
+      .layout { grid-template-columns: 1fr; }
+      aside { max-height: 220px; border-right: 0; border-bottom: 1px solid #c8d2dc; }
+      main { padding: 14px; }
+      header { padding: 0 12px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>ラダー図ビューア</strong>
+    <span class="source" id="source-name">__SOURCE_NAME_JSON__</span>
+    <span class="spacer"></span>
+    <span id="connection">変更を監視中</span>
+  </header>
+  <div class="layout">
+    <aside>
+      <div class="search-wrap">
+        <input id="search" type="search" placeholder="ステーション・サイクルを検索" aria-label="セクションを検索">
+      </div>
+      <nav id="navigation" aria-label="ラダーセクション"></nav>
+    </aside>
+    <main>
+      <div class="toolbar">
+        <h1 id="section-title"></h1>
+        <span class="counts" id="section-count"></span>
+      </div>
+      <div id="reload-warning" role="alert"></div>
+      <div id="model-warning" role="status"></div>
+      <div id="parse-warnings"></div>
+      <div class="rung-list" id="rung-list"></div>
+    </main>
+  </div>
+  <script>
+    "use strict";
+    const MODEL = __MODEL_JSON__;
+    const INITIAL_SIGNATURE = "__SOURCE_SIGNATURE__";
+    const NS = "http://www.w3.org/2000/svg";
+    const savedNumber = sessionStorage.getItem("activeLadderSection");
+    let activeNumber = MODEL.sections.some(section => section.number === savedNumber)
+      ? savedNumber
+      : (MODEL.sections.length ? MODEL.sections[0].number : "");
+    let lastSignature = INITIAL_SIGNATURE;
+
+    if (MODEL.global_warnings.length) {
+      const warning = document.getElementById("model-warning");
+      warning.textContent = MODEL.global_warnings.join("\n");
+      warning.style.display = "block";
+    }
+
+    function element(tag, attributes, parent, namespace) {
+      const node = namespace ? document.createElementNS(namespace, tag) : document.createElement(tag);
+      for (const [key, value] of Object.entries(attributes || {})) {
+        if (key === "text") node.textContent = value;
+        else node.setAttribute(key, value);
+      }
+      if (parent) parent.appendChild(node);
+      return node;
+    }
+
+    function svgNode(tag, attributes, parent) {
+      return element(tag, attributes, parent, NS);
+    }
+
+    function measure(expression) {
+      if (expression.type === "contact") return { width: 160, height: 82 };
+      const sizes = expression.children.map(measure);
+      if (expression.type === "and") {
+        return {
+          width: sizes.reduce((sum, size) => sum + size.width, 0),
+          height: Math.max(...sizes.map(size => size.height))
+        };
+      }
+      return {
+        width: Math.max(...sizes.map(size => size.width)) + 70,
+        height: sizes.reduce((sum, size) => sum + size.height, 0) + (sizes.length - 1) * 24
+      };
+    }
+
+    function drawExpression(svg, expression, x, y) {
+      const size = measure(expression);
+      const center = y + size.height / 2;
+      if (expression.type === "contact") {
+        const mnemonic = expression.mnemonic || "";
+        const normallyClosed = ["LDI", "ANDI", "ANI", "ANFI"].includes(mnemonic);
+        const edge = mnemonic === "LDF" || mnemonic === "ANFI";
+        const labelY = y + 15;
+        const barTop = y + 27;
+        const barBottom = y + 53;
+        svgNode("line", { x1: x, y1: center, x2: x + 48, y2: center, class: "wire" }, svg);
+        svgNode("line", { x1: x + 58, y1: barTop, x2: x + 58, y2: barBottom, class: "contact-bar" }, svg);
+        svgNode("line", { x1: x + 78, y1: barTop, x2: x + 78, y2: barBottom, class: "contact-bar" }, svg);
+        if (normallyClosed) {
+          svgNode("line", { x1: x + 53, y1: barBottom - 2, x2: x + 83, y2: barTop + 2, class: "contact-slash" }, svg);
+        }
+        if (edge) {
+          svgNode("path", { d: `M ${x + 52} ${barTop - 5} l 6 5 -6 5`, class: "contact-slash" }, svg);
+        }
+        svgNode("line", { x1: x + 78, y1: center, x2: x + size.width, y2: center, class: "wire" }, svg);
+        const label = svgNode("text", { x: x + size.width / 2, y: labelY, class: "contact-label" }, svg);
+        label.textContent = expression.operand;
+        const title = svgNode("title", {}, label);
+        title.textContent = `${mnemonic} ${expression.operand}`;
+        if (expression.annotation) {
+          const note = svgNode("text", { x: x + size.width / 2, y: y + 70, class: "contact-note" }, svg);
+          note.textContent = expression.annotation;
+        }
+        return { width: size.width, height: size.height, center };
+      }
+
+      if (expression.type === "and") {
+        const sizes = expression.children.map(measure);
+        let cursor = x;
+        let previous = null;
+        for (let index = 0; index < expression.children.length; index += 1) {
+          const childSize = sizes[index];
+          const childY = y + (size.height - childSize.height) / 2;
+          const child = drawExpression(svg, expression.children[index], cursor, childY);
+          if (previous) {
+            const startX = cursor;
+            const startY = previous.center;
+            const endY = child.center;
+            svgNode("path", {
+              d: `M ${startX - 1} ${startY} H ${startX + 10} V ${endY} H ${startX + 1}`,
+              class: "wire"
+            }, svg);
+          }
+          previous = { center: child.center };
+          cursor += childSize.width;
+        }
+        return { width: size.width, height: size.height, center };
+      }
+
+      const sizes = expression.children.map(measure);
+      const leftBus = x + 20;
+      const childX = x + 35;
+      const rightBus = x + size.width - 20;
+      const rowCenters = [];
+      let rowY = y;
+      for (let index = 0; index < expression.children.length; index += 1) {
+        const childSize = sizes[index];
+        const childY = rowY + (childSize.height - childSize.height) / 2;
+        const child = drawExpression(svg, expression.children[index], childX, childY);
+        rowCenters.push(child.center);
+        svgNode("line", { x1: leftBus, y1: child.center, x2: childX, y2: child.center, class: "wire" }, svg);
+        svgNode("line", { x1: childX + childSize.width, y1: child.center, x2: rightBus, y2: child.center, class: "wire" }, svg);
+        rowY += childSize.height + 24;
+      }
+      svgNode("line", { x1: leftBus, y1: rowCenters[0], x2: leftBus, y2: rowCenters[rowCenters.length - 1], class: "wire" }, svg);
+      svgNode("line", { x1: rightBus, y1: rowCenters[0], x2: rightBus, y2: rowCenters[rowCenters.length - 1], class: "wire" }, svg);
+      svgNode("line", { x1: x, y1: center, x2: leftBus, y2: center, class: "wire" }, svg);
+      svgNode("line", { x1: rightBus, y1: center, x2: x + size.width, y2: center, class: "wire" }, svg);
+      if (rowCenters[0] !== center) {
+        svgNode("line", { x1: leftBus, y1: Math.min(rowCenters[0], center), x2: leftBus, y2: Math.max(rowCenters[0], center), class: "wire" }, svg);
+        svgNode("line", { x1: rightBus, y1: Math.min(rowCenters[0], center), x2: rightBus, y2: Math.max(rowCenters[0], center), class: "wire" }, svg);
+      }
+      return { width: size.width, height: size.height, center };
+    }
+
+    function drawOutput(svg, output, x, center) {
+      const operands = output.operands || [];
+      const mnemonic = output.mnemonic || "?";
+      const label = operands.join(" ");
+      if (["OUT", "SET", "RST"].includes(mnemonic)) {
+        svgNode("line", { x1: x, y1: center, x2: x + 25, y2: center, class: "wire" }, svg);
+        svgNode("path", { d: `M ${x + 38} ${center - 17} C ${x + 18} ${center - 17}, ${x + 18} ${center + 17}, ${x + 38} ${center + 17}`, class: "coil" }, svg);
+        svgNode("path", { d: `M ${x + 48} ${center - 17} C ${x + 68} ${center - 17}, ${x + 68} ${center + 17}, ${x + 48} ${center + 17}`, class: "coil" }, svg);
+        svgNode("line", { x1: x + 61, y1: center, x2: x + 88, y2: center, class: "wire" }, svg);
+        const text = svgNode("text", { x: x + 48, y: center + 34, class: "contact-label" }, svg);
+        text.textContent = `${mnemonic} ${label}`.trim();
+      } else {
+        svgNode("line", { x1: x, y1: center, x2: x + 24, y2: center, class: "wire" }, svg);
+        svgNode("rect", { x: x + 24, y: center - 25, width: 150, height: 50, rx: 2, class: "block" }, svg);
+        const title = svgNode("text", { x: x + 99, y: center - 5, class: "block-title" }, svg);
+        title.textContent = mnemonic;
+        const detail = svgNode("text", { x: x + 99, y: center + 14, class: "block-detail" }, svg);
+        detail.textContent = label;
+      }
+      if (output.annotation) {
+        const note = svgNode("text", { x: x + 99, y: center + 42, class: "contact-note" }, svg);
+        note.textContent = output.annotation;
+      }
+    }
+
+    function drawRung(rung, index) {
+      const size = measure(rung.expression);
+      const height = Math.max(size.height, 82) + 28;
+      const width = size.width + 280;
+      const svg = svgNode("svg", {
+        class: "ladder-svg",
+        width,
+        height,
+        role: "img",
+        "aria-label": `Rung ${index + 1}`
+      });
+      const railTop = 10;
+      const railBottom = height - 10;
+      svgNode("line", { x1: 25, y1: railTop, x2: 25, y2: railBottom, class: "wire" }, svg);
+      svgNode("line", { x1: width - 25, y1: railTop, x2: width - 25, y2: railBottom, class: "wire" }, svg);
+      const expressionX = 45;
+      const expressionY = (height - size.height) / 2;
+      const expressionLayout = drawExpression(svg, rung.expression, expressionX, expressionY);
+      const outputX = expressionX + size.width + 18;
+      svgNode("line", {
+        x1: expressionX + size.width,
+        y1: expressionY + expressionLayout.center - expressionY,
+        x2: outputX,
+        y2: expressionY + expressionLayout.center - expressionY,
+        class: "wire"
+      }, svg);
+      drawOutput(svg, rung.output, outputX, height / 2);
+      const endX = ["OUT", "SET", "RST"].includes(rung.output.mnemonic) ? outputX + 88 : outputX + 174;
+      svgNode("line", { x1: endX, y1: height / 2, x2: width - 25, y2: height / 2, class: "wire" }, svg);
+      return svg;
+    }
+
+    function renderNavigation(query) {
+      const nav = document.getElementById("navigation");
+      nav.replaceChildren();
+      const normalized = query.trim().toLocaleLowerCase();
+      const groups = new Map();
+      for (const section of MODEL.sections) {
+        if (normalized && !section.title.toLocaleLowerCase().includes(normalized) &&
+            !section.number.includes(normalized)) continue;
+        if (!groups.has(section.group)) groups.set(section.group, []);
+        groups.get(section.group).push(section);
+      }
+      for (const [groupName, sections] of groups) {
+        const group = element("div", { class: "nav-group" }, nav);
+        element("h2", { text: groupName }, group);
+        for (const section of sections) {
+          const button = element("button", {
+            class: `section-button${section.number === activeNumber ? " active" : ""}`,
+            type: "button",
+            title: section.title,
+            text: `${section.number.padStart(2, "0")}  ${section.title}`
+          }, group);
+          button.addEventListener("click", () => {
+            activeNumber = section.number;
+            sessionStorage.setItem("activeLadderSection", activeNumber);
+            renderNavigation(document.getElementById("search").value);
+            renderSection();
+          });
+        }
+      }
+    }
+
+    function renderSection() {
+      const section = MODEL.sections.find(item => item.number === activeNumber);
+      const list = document.getElementById("rung-list");
+      const warningBox = document.getElementById("parse-warnings");
+      list.replaceChildren();
+      warningBox.replaceChildren();
+      if (!section) {
+        document.getElementById("section-title").textContent = "表示するセクションがありません";
+        document.getElementById("section-count").textContent = "";
+        list.appendChild(element("div", { class: "empty", text: "入力ファイルにセクションがありません。" }));
+        return;
+      }
+      document.getElementById("section-title").textContent = section.title;
+      document.getElementById("section-count").textContent =
+        `Input${section.number}  ·  ${section.rungs.length} rung(s)`;
+      if (section.warnings.length) {
+        warningBox.style.display = "block";
+        element("strong", { text: "表示上の注意" }, warningBox);
+        const items = element("ul", {}, warningBox);
+        for (const warning of section.warnings) element("li", { text: warning }, items);
+      } else {
+        warningBox.style.display = "none";
+      }
+      if (!section.rungs.length) {
+        list.appendChild(element("div", { class: "empty", text: "このセクションに表示可能な出力命令がありません。" }));
+      }
+      section.rungs.forEach((rung, index) => {
+        const card = element("section", { class: "rung" }, list);
+        const head = element("div", { class: "rung-head" }, card);
+        element("span", { class: "index", text: String(index + 1).padStart(3, "0") }, head);
+        element("span", { class: "tag", text: `${rung.output.mnemonic} ${rung.output.operands.join(" ")}` }, head);
+        const scroll = element("div", { class: "rung-scroll" }, card);
+        scroll.appendChild(drawRung(rung, index));
+      });
+    }
+
+    function showReloadError(message) {
+      const warning = document.getElementById("reload-warning");
+      const connection = document.getElementById("connection");
+      warning.textContent = `元ファイルを読み込めませんでした。前回の表示を保持しています。\n${message}`;
+      warning.style.display = "block";
+      connection.textContent = "更新エラー";
+      connection.classList.add("error");
+    }
+
+    document.getElementById("search").addEventListener("input", event => {
+      renderNavigation(event.target.value);
+    });
+    renderNavigation("");
+    renderSection();
+
+    async function checkSource() {
+      try {
+        const response = await fetch("/api/status", { cache: "no-store" });
+        if (!response.ok) throw new Error(`status ${response.status}`);
+        const status = await response.json();
+        if (status.error) {
+          showReloadError(status.error);
+          return;
+        }
+        if (status.signature !== lastSignature) {
+          window.location.reload();
+          return;
+        }
+        const warning = document.getElementById("reload-warning");
+        warning.style.display = "none";
+        const connection = document.getElementById("connection");
+        connection.textContent = `更新を監視中 · ${status.last_updated}`;
+        connection.classList.remove("error");
+      } catch (error) {
+        showReloadError(`閲覧サーバーに接続できません: ${error.message}`);
+      }
+    }
+    window.setInterval(checkSource, 1000);
+    checkSource();
+  </script>
+</body>
+</html>
